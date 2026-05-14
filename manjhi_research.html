@@ -126,6 +126,34 @@
       color: #555;
     }
 
+    /* Photo grid */
+    .photos {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .photo-item {
+      text-align: center;
+    }
+
+    .photo-item img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border: 1px solid #ccc;
+      border-radius: 2px;
+      display: block;
+    }
+
+    .photo-item figcaption {
+      font-size: 10px;
+      color: #555;
+      font-style: italic;
+      margin-top: 3px;
+    }
+
     /* Print */
     @media print {
       body { padding: 20px 28px; font-size: 12px; }
@@ -134,6 +162,7 @@
       th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       tr:nth-child(even) td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       a { text-decoration: none; color: inherit; }
+      .photo-item img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
 </head>
@@ -146,6 +175,21 @@
 
   <h2>Who Was He?</h2>
   <p>Dashrath Manjhi was a real person who lived in India. He is famous for doing something that most people said was impossible — and he did it completely by himself. He is nicknamed the <strong>"Mountain Man of India"</strong> because he carved a road through a mountain using only hand tools.</p>
+
+  <div class="photos">
+    <figure class="photo-item">
+      <img src="manjhi.avif" alt="Dashrath Manjhi as a young man">
+      <figcaption>Manjhi in his youth</figcaption>
+    </figure>
+    <figure class="photo-item">
+      <img src="path.avif" alt="Dashrath Manjhi as an adult">
+      <figcaption>Manjhi as an adult</figcaption>
+    </figure>
+    <figure class="photo-item">
+      <img src="dashrath-manjhi-2.webp" alt="Statue of Dashrath Manjhi at his memorial in Gehlaur, Bihar">
+      <figcaption>Statue at his memorial, Gehlaur, Bihar</figcaption>
+    </figure>
+  </div>
 
   <h2>Early Life</h2>
   <ul>
