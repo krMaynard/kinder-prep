@@ -154,6 +154,29 @@
       margin-top: 3px;
     }
 
+    /* Stamp float */
+    .stamp {
+      float: right;
+      margin: 0 0 8px 14px;
+      text-align: center;
+    }
+
+    .stamp img {
+      height: 130px;
+      border: 1px solid #ccc;
+      border-radius: 2px;
+      display: block;
+    }
+
+    .stamp figcaption {
+      font-size: 10px;
+      color: #555;
+      font-style: italic;
+      margin-top: 3px;
+    }
+
+    .clearfix::after { content: ""; display: table; clear: both; }
+
     /* Print */
     @media print {
       body { padding: 20px 28px; font-size: 12px; }
@@ -215,7 +238,7 @@
   </ul>
 
   <figure style="margin: 16px 0; text-align: center;">
-    <img src="Screenshot 2026-05-14 at 2.04.19 PM.png"
+    <img src="gehlour-satellite.png"
          alt="Satellite view of the Gehlour Hills showing the location of Dashrath Manjhi's road"
          style="width: 100%; border: 1px solid #ccc; border-radius: 2px;">
     <figcaption style="font-size: 10px; color: #555; font-style: italic; margin-top: 4px;">
@@ -224,23 +247,23 @@
   </figure>
 
   <h2>His Impact &amp; Legacy</h2>
-  <ul>
-    <li>After finishing the road, he spent his remaining years asking the government to help poor villages like his.</li>
-    <li>In <strong>2006</strong>, the Chief Minister of Bihar was so moved that he stood up and offered Manjhi his own chair — a rare sign of deep respect.</li>
-    <li>Manjhi died on <strong>August 17, 2007</strong> from cancer, at age 73.</li>
-    <li>The Government of Bihar honored him with a <strong>state funeral</strong>.</li>
-    <li>The road he carved was paved and officially named the <strong>Dashrath Manjhi Path</strong>.</li>
-    <li>A hospital and a memorial were built in his village in his honor.</li>
-    <li>In <strong>2016</strong>, India Post printed a <strong>postage stamp</strong> with his face on it.
-      <figure style="margin: 8px 0 4px 0; display: inline-block;">
-        <img src="Dashrath_Manjhi_2016_stamp_of_India.jpg"
-             alt="2016 India Post commemorative stamp featuring Dashrath Manjhi"
-             style="height: 120px; border: 1px solid #ccc; border-radius: 2px; display: block;">
-        <figcaption style="font-size: 10px; color: #555; font-style: italic; margin-top: 3px;">2016 India Post commemorative stamp</figcaption>
-      </figure>
-    </li>
-    <li>A Bollywood movie, <em>Manjhi: The Mountain Man</em> (2015), told his story to the world.</li>
-  </ul>
+  <div class="clearfix">
+    <figure class="stamp">
+      <img src="Dashrath_Manjhi_2016_stamp_of_India.jpg"
+           alt="2016 India Post commemorative stamp featuring Dashrath Manjhi">
+      <figcaption>2016 India Post stamp</figcaption>
+    </figure>
+    <ul>
+      <li>After finishing the road, he spent his remaining years asking the government to help poor villages like his.</li>
+      <li>In <strong>2006</strong>, the Chief Minister of Bihar was so moved that he stood up and offered Manjhi his own chair — a rare sign of deep respect.</li>
+      <li>Manjhi died on <strong>August 17, 2007</strong> from cancer, at age 73.</li>
+      <li>The Government of Bihar honored him with a <strong>state funeral</strong>.</li>
+      <li>The road he carved was paved and officially named the <strong>Dashrath Manjhi Path</strong>.</li>
+      <li>A hospital and a memorial were built in his village in his honor.</li>
+      <li>In <strong>2016</strong>, India Post printed a <strong>postage stamp</strong> with his face on it.</li>
+      <li>A Bollywood movie, <em>Manjhi: The Mountain Man</em> (2015), told his story to the world.</li>
+    </ul>
+  </div>
 
   <h2>Key Facts at a Glance</h2>
   <table>
