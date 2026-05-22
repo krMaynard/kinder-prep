@@ -207,7 +207,7 @@ class _HighlightedText extends StatelessWidget {
     }
 
     final violSet = violations.map((v) => v.toLowerCase()).toSet();
-    final words = text.split(RegExp(r'(\s+)'));
+    final words = text.split(RegExp(r'\s+'));
     final spans = <TextSpan>[];
 
     for (var i = 0; i < words.length; i++) {
