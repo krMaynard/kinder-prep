@@ -71,11 +71,10 @@ You will need a **Gemini API key** from [aistudio.google.com](https://aistudio.g
 #### Setup
 
 ```bash
-cd tools
-pip3 install -r requirements.txt
+pip3 install -r tools/requirements.txt
 ```
 
-> **Note:** If `pip3 install keyring` fails on a fresh macOS install, run `pip3 install keyring --user` or use a virtual environment.
+> **Note:** If `pip3 install keyring` fails on a fresh macOS install, run `pip3 install --user -r tools/requirements.txt` or use a virtual environment.
 
 #### Running
 
@@ -157,7 +156,7 @@ The APK is written to:
 apps-native/story_generator_flutter/build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Transfer it to the device (AirDrop via a file manager, Google Drive, USB, etc.) and open it to install. You may need to enable **Install unknown apps** for the file manager or browser you use to open the APK.
+Transfer it to the device (USB, Google Drive, email, Bluetooth, etc.) and open it to install. You may need to enable **Install unknown apps** for the file manager or browser you use to open the APK.
 
 > The release build is signed with the debug keystore (fine for personal sideloading; not suitable for Play Store submission).
 
