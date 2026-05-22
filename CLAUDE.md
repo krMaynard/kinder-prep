@@ -29,6 +29,10 @@ This repository supports a 6-month curriculum to prepare a gifted 4-year-old for
 - Sessions: ~15 minutes/day, 5 days/week
 - Goal: Harker School Kindergarten admission readiness
 
+## PR Self-Review
+
+After pushing a branch and creating a PR, always run `/code-review --comment` against it before considering the work done. Read each changed file as if seeing it for the first time — not as the author who just wrote it. Post findings as inline comments, then fix every actionable one in a follow-up commit before merging.
+
 ## LLM API Model Names
 
 Before hardcoding any Gemini (or other LLM) model name, **always confirm the exact model ID with a web search** — do not rely on training-data knowledge. Model names change frequently (preview → stable, version bumps, deprecations) and AI code review tools (e.g. Gemini Code Assist) may themselves have stale knowledge of valid model IDs.
