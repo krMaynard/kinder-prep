@@ -518,6 +518,14 @@ class StoryGeneratorApp(tk.Tk):
     def _load_config(self) -> None:
         self._config = load_json_file(CONFIG_FILE)
         self._profile = load_json_file(PROFILE_FILE)
+        self._migrate_key_to_keychain()
+
+    def _migrate_key_to_keychain(self) -> None:
+        """One-time migration: move api_key from config.json into Keychain."""
+        old_key = self._config.pop("api_key", None)
+        if old_key and KEYRING_AVAILABLE and not keychain_get():
+            keychain_set(old_key)
+            self._save_config()  # persist the removal of api_key from config
 
     def _save_config(self) -> None:
         save_json_file(CONFIG_FILE, self._config)
@@ -884,7 +892,14 @@ class StoryGeneratorApp(tk.Tk):
         if self._remember_key_var.get():
             self._config["remember_key"] = True
             self._save_config()
-            keychain_set(key)
+            if KEYRING_AVAILABLE:
+                keychain_set(key)
+            else:
+                messagebox.showwarning(
+                    "Keychain Unavailable",
+                    "keyring is not installed — API key was not saved.\n"
+                    "Run: pip install keyring",
+                )
         return key
 
     # ------------------------------------------------------------------
