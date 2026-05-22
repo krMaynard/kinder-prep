@@ -190,6 +190,10 @@ COLORS = {
 
 def ensure_config_dir() -> None:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    try:
+        CONFIG_DIR.chmod(0o700)
+    except OSError:
+        pass
 
 
 def load_json_file(path: pathlib.Path) -> dict:
@@ -206,6 +210,10 @@ def save_json_file(path: pathlib.Path, data: dict) -> None:
     ensure_config_dir()
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+    try:
+        path.chmod(0o600)
+    except OSError:
+        pass
 
 
 def slugify(text: str) -> str:
@@ -282,6 +290,7 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
   ]
 }}"""
 
+    raw = ""
     last_error: Exception | None = None
     for attempt in range(2):
         try:
@@ -821,10 +830,9 @@ class StoryGeneratorApp(tk.Tk):
     def _on_remember_key_changed(self) -> None:
         remember = self._remember_key_var.get()
         self._config["remember_key"] = remember
-        if remember:
-            self._config["api_key"] = self._api_key_var.get()
-        else:
+        if not remember:
             self._config.pop("api_key", None)
+        # Key itself is only written on first successful use in _get_api_key().
         self._save_config()
 
     def _get_api_key(self) -> Optional[str]:
@@ -1233,7 +1241,7 @@ class StoryGeneratorApp(tk.Tk):
         child_name = self._child_name_var.get().strip() or "the child"
         favorite_character = self._story_char_var.get().strip() or "a friendly animal"
         style_guide = self._get_style_guide()
-        pages = self._story_data.get("pages", [])
+        pages = list(self._story_data.get("pages", []))  # snapshot before dispatch
         page_count = len(pages)
 
         self._set_status(f"Generating images for {page_count} pages…")

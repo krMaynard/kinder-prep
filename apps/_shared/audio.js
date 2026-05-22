@@ -105,9 +105,6 @@ export function speak(text, rate = 0.85, pitch = 1.1) {
       if (preferred) utt.voice = preferred;
     }
 
-    utt.onend   = () => resolve();
-    utt.onerror = () => resolve(); // never reject — always degrade gracefully
-
     synth.speak(utt);
 
     // iOS Safari sometimes stalls after a page becomes visible again.
@@ -116,7 +113,11 @@ export function speak(text, rate = 0.85, pitch = 1.1) {
       if (synth.paused) synth.resume();
     }, 200);
 
-    utt.onend = () => { clearTimeout(resumeTimer); resolve(); };
+    // Always clear the stall-recovery timer before resolving so it can't
+    // fire synth.resume() on a subsequent utterance.
+    function done() { clearTimeout(resumeTimer); resolve(); }
+    utt.onend   = done;
+    utt.onerror = done; // never reject — always degrade gracefully
   });
 }
 
@@ -204,8 +205,9 @@ export function preloadVoices() {
   if (!isSupported()) return;
   const synth = getSynth();
   // Some browsers populate voices synchronously; others fire voiceschanged.
+  // Trigger voice list population; the call itself caches voices in the browser.
   if (synth.getVoices().length === 0) {
-    synth.addEventListener('voiceschanged', () => {}, { once: true });
+    synth.addEventListener('voiceschanged', () => synth.getVoices(), { once: true });
   }
 }
 

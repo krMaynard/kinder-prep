@@ -269,3 +269,46 @@ export function getSummary(currentMonth, currentWeek) {
     sightWordsCount: getSightWordsLearned().length,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Per-app word / counter tracking (used by activity apps)
+// ---------------------------------------------------------------------------
+
+/**
+ * Return the list of words practiced so far for a given app.
+ * @param {string} appId  - e.g. 'phonics_blender'
+ * @returns {string[]}
+ */
+export function getPracticed(appId) {
+  try {
+    return JSON.parse(getItem(`app_${appId}_practiced`) ?? '[]');
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Mark a word as practiced for a given app (idempotent).
+ * @param {string} appId
+ * @param {string} word
+ */
+export function markPracticed(appId, word) {
+  const list = getPracticed(appId);
+  if (!list.includes(word)) {
+    list.push(word);
+    setItem(`app_${appId}_practiced`, JSON.stringify(list));
+  }
+}
+
+/**
+ * Increment a named counter for a given app and return the new value.
+ * @param {string} appId
+ * @param {string} key   - counter name, e.g. 'blends'
+ * @returns {number}
+ */
+export function increment(appId, key) {
+  const current = parseInt(getItem(`app_${appId}_${key}`) ?? '0', 10);
+  const next = current + 1;
+  setItem(`app_${appId}_${key}`, String(next));
+  return next;
+}

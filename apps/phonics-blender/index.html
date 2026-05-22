@@ -445,17 +445,16 @@
   <div id="reward-overlay" role="dialog" aria-modal="true" aria-label="Great job reward">
     <div class="reward-stars">⭐🌟⭐</div>
     <div class="reward-msg" id="reward-msg">Amazing! You read 5 words!</div>
-    <button class="btn btn-primary reward-continue-btn" id="reward-continue-btn">Keep Going! 🎉</button>
+    <button class="btn-big btn-sky reward-continue-btn" id="reward-continue-btn">Keep Going! 🎉</button>
   </div>
 
-  <!-- Shared modules -->
-  <script src="../_shared/audio.js"></script>
-  <script src="../_shared/progress.js"></script>
-
-  <script>
+  <script type="module">
   /* ============================================================
      PHONICS BLENDER — Main Application
      ============================================================ */
+  import { speakLetter, speakWord, speakPhrase } from '../_shared/audio.js';
+  import { getPracticed, markPracticed, increment } from '../_shared/progress.js';
+
   (function () {
     'use strict';
 
@@ -589,7 +588,7 @@
     function renderWord() {
       const wordObj = filteredWords[currentIndex];
       const letters = wordObj.word.split('');
-      const practiced = ProgressUtils.getPracticed(APP_ID);
+      const practiced = getPracticed(APP_ID);
       const isPracticed = practiced.includes(wordObj.word);
 
       // Update each letter card
@@ -626,7 +625,7 @@
     /* ── Progress dots & counter ─────────────────────────────── */
     function updateProgress() {
       const total = filteredWords.length;
-      const practiced = ProgressUtils.getPracticed(APP_ID);
+      const practiced = getPracticed(APP_ID);
 
       wordCounterEl.textContent = `Word ${currentIndex + 1} of ${total}`;
 
@@ -677,7 +676,7 @@
         setTimeout(() => card.classList.remove('active'), 600);
 
         // Speak phoneme
-        AudioUtils.speakLetter(letter);
+        speakLetter(letter);
       }
 
       card.addEventListener('click', handleCardTap);
@@ -706,15 +705,15 @@
       showIllustration(wordObj);
 
       // Speak the word
-      await AudioUtils.speakWord(wordObj.word);
+      await speakWord(wordObj.word);
 
       // Track progress
-      ProgressUtils.markPracticed(APP_ID, wordObj.word);
+      markPracticed(APP_ID, wordObj.word);
       updateProgress();
 
       // Increment blend counter and check for reward
       sessionBlends++;
-      const totalBlends = ProgressUtils.increment(APP_ID, 'blends');
+      const totalBlends = increment(APP_ID, 'blends');
 
       if (sessionBlends > 0 && sessionBlends % REWARD_EVERY === 0) {
         await showReward(sessionBlends);
@@ -762,7 +761,7 @@
         rewardMsg.textContent = `Amazing! You read ${count} ${wordLabel}!`;
         rewardOverlay.classList.add('visible');
         launchConfetti(80);
-        AudioUtils.speakPhrase(`Amazing! You read ${count} ${wordLabel}!`);
+        speakPhrase(`Amazing! You read ${count} ${wordLabel}!`);
 
         rewardContinue.onclick = () => {
           rewardOverlay.classList.remove('visible');
