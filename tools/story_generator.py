@@ -538,7 +538,7 @@ class StoryGeneratorApp(tk.Tk):
     def _load_config(self) -> None:
         self._config = load_json_file(CONFIG_FILE)
         self._profile = load_json_file(PROFILE_FILE)
-        self._style_templates = {**BUILTIN_TEMPLATES, **load_json_file(STYLE_TEMPLATES_FILE)}
+        self._style_templates = self._load_style_templates()
         self._migrate_key_to_keychain()
 
     def _migrate_key_to_keychain(self) -> None:
@@ -755,7 +755,9 @@ class StoryGeneratorApp(tk.Tk):
         self._template_var = tk.StringVar(value="Watercolor")
         template_names = list(self._style_templates.keys())
         self._template_menu = ttk.OptionMenu(
-            template_row, self._template_var, template_names[0] if template_names else "", *template_names
+            template_row, self._template_var,
+            template_names[0] if template_names else "",
+            *template_names[1:],
         )
         self._template_menu.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4))
         ttk.Button(
