@@ -159,7 +159,7 @@ COMMON_SIGHT_WORDS = {
     "some", "day", "way", "time",
 }
 
-TEXT_MODEL = "gemini-2.5-flash"
+TEXT_MODEL = "gemini-3.1-pro-preview"
 IMAGE_MODEL = "gemini-2.5-flash-image-preview"  # Nano Banana — native image generation
 
 # ---------------------------------------------------------------------------
