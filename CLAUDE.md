@@ -34,5 +34,5 @@ This repository supports a 6-month curriculum to prepare a gifted 4-year-old for
 Before hardcoding any Gemini (or other LLM) model name, **always confirm the exact model ID with a web search** — do not rely on training-data knowledge. Model names change frequently (preview → stable, version bumps, deprecations) and AI code review tools (e.g. Gemini Code Assist) may themselves have stale knowledge of valid model IDs.
 
 Current models in use (verify before changing):
-- Text generation: `gemini-3.1-pro-preview` — check [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models)
+- Text generation: `gemini-3.1-pro-preview` (fallback: `gemini-3.5-flash`) — check [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models)
 - Image generation: `gemini-2.5-flash-image-preview` (Nano Banana) — check [ai.google.dev/gemini-api/docs/image-generation](https://ai.google.dev/gemini-api/docs/image-generation)
