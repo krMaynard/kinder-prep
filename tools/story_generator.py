@@ -159,8 +159,8 @@ COMMON_SIGHT_WORDS = {
     "some", "day", "way", "time",
 }
 
-TEXT_MODEL = "gemini-2.5-flash"
-IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation"
+TEXT_MODEL = "gemini-2.0-flash"
+IMAGE_MODEL = "gemini-2.0-flash-exp"
 
 # ---------------------------------------------------------------------------
 # Color scheme
@@ -953,6 +953,12 @@ class StoryGeneratorApp(tk.Tk):
 
         all_violations: list[str] = []
 
+        # Child name and character name are explicitly allowed by the prompt
+        # regardless of phonics level — extract individual words from each.
+        extra_names: list[str] = []
+        for name_field in (self._child_name_var.get(), self._story_char_var.get()):
+            extra_names.extend(w.strip() for w in name_field.split() if w.strip())
+
         for page_data in pages:
             page_num = page_data.get("page", 0)
             text = page_data.get("text", "")
@@ -982,7 +988,7 @@ class StoryGeneratorApp(tk.Tk):
             )
             edit_btn.pack(side=tk.RIGHT)
 
-            violations = check_vocabulary(text, phonics_level, sight_list)
+            violations = check_vocabulary(text, phonics_level, sight_list + extra_names)
             all_violations.extend(violations)
 
             text_widget = tk.Text(
