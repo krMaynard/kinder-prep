@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <!-- Full-screen iPad / iOS web app meta tags -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Learning Time!" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#FFFBF0" />
+
+  <title>Learning Time! 🌟</title>
+
+  <!-- Shared design system -->
+  <link rel="stylesheet" href="../_shared/styles.css" />
+
+  <style>
+    /* ---- Home screen layout -------------------------------------------- */
+    body {
+      background: linear-gradient(160deg, #FFF5DC 0%, #E8F8F5 50%, #F0F0FF 100%);
+      min-height: 100dvh;
+    }
+
+    /* Header greeting band */
+    .header {
+      text-align: center;
+      padding: var(--space-md) var(--space-md) 0;
+    }
+
+    .greeting {
+      font-family: var(--font-display);
+      font-size: var(--text-xl);
+      color: var(--coral);
+      line-height: 1.2;
+      margin-bottom: var(--space-xs);
+    }
+
+    .date-line {
+      font-size: var(--text-sm);
+      color: var(--color-text-muted);
+    }
+
+    /* Progress banner */
+    .progress-banner {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-md) var(--space-lg);
+      margin: var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-md);
+    }
+
+    .progress-label {
+      font-family: var(--font-display);
+      font-size: var(--text-md);
+      color: var(--color-text);
+    }
+
+    .progress-sub {
+      font-size: var(--text-xs);
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    /* App grid */
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+      padding: 0 var(--space-md);
+      flex: 1;
+    }
+
+    /* Individual app button */
+    .app-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-sm);
+      min-height: 150px;
+      border-radius: var(--radius-lg);
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: var(--shadow-md);
+      transition:
+        transform var(--duration-fast) var(--ease-bounce),
+        box-shadow var(--duration-fast) ease;
+      padding: var(--space-md);
+      /* Rendered as <a> tags so we need color reset */
+      color: var(--color-text);
+    }
+
+    .app-btn:active {
+      transform: scale(0.93) translateY(3px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .app-emoji {
+      font-size: 3.8rem;
+      line-height: 1;
+      /* Slight drop shadow so emoji pops on coloured bg */
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.18));
+    }
+
+    .app-label {
+      font-family: var(--font-display);
+      font-size: var(--text-md);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    /* App colour themes */
+    .app-story  { background: linear-gradient(135deg, #FFB3B3, #FF6B6B); color: #fff; }
+    .app-sound  { background: linear-gradient(135deg, #A8EDE9, #4ECDC4); color: #fff; }
+    .app-words  { background: linear-gradient(135deg, #FFF5B0, #FFE66D); color: var(--color-text); }
+    .app-number { background: linear-gradient(135deg, #CFFAF4, #95E1D3); color: var(--color-text); }
+    .app-math   { background: linear-gradient(135deg, #EDE6FF, #C9B1FF); color: #fff; }
+
+    /* "Today's Story" spans full width on odd count */
+    .app-story-full {
+      grid-column: 1 / -1;
+      min-height: 130px;
+      flex-direction: row;
+      justify-content: center;
+      gap: var(--space-lg);
+    }
+
+    .app-story-full .app-emoji { font-size: 3rem; }
+    .app-story-full .app-label { font-size: var(--text-lg); }
+
+    /* Star counter footer */
+    .star-footer {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+      padding: var(--space-md) var(--space-lg);
+      margin-top: var(--space-md);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-md);
+    }
+
+    .star-total {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      color: var(--yellow-dark);
+    }
+
+    .star-total-icon {
+      font-size: var(--text-xl);
+    }
+
+    .settings-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: var(--touch-std);
+      height: var(--touch-std);
+      border-radius: 50%;
+      background: var(--color-bg);
+      border: none;
+      font-size: 1.8rem;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--duration-fast) var(--ease-bounce);
+    }
+
+    .settings-btn:active { transform: scale(0.88) rotate(30deg); }
+
+    /* ---- Settings panel ----------------------------------------------- */
+    .settings-panel {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 500;
+      padding: var(--space-md);
+      padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-normal) ease;
+    }
+
+    .settings-panel.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .settings-sheet {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl) var(--radius-xl) var(--radius-lg) var(--radius-lg);
+      padding: var(--space-lg);
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(60px);
+      transition: transform var(--duration-normal) var(--ease-bounce);
+    }
+
+    .settings-panel.open .settings-sheet {
+      transform: translateY(0);
+    }
+
+    .settings-title {
+      font-family: var(--font-display);
+      font-size: var(--text-lg);
+      margin-bottom: var(--space-md);
+      text-align: center;
+    }
+
+    .settings-row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+      margin-bottom: var(--space-md);
+    }
+
+    .settings-row label {
+      font-size: var(--text-sm);
+      font-family: var(--font-display);
+      color: var(--color-text-muted);
+    }
+
+    .name-input {
+      font-size: var(--text-md);
+      font-family: var(--font-display);
+      padding: var(--space-sm) var(--space-md);
+      border: 3px solid var(--sky-light);
+      border-radius: var(--radius-md);
+      outline: none;
+      width: 100%;
+      /* Re-enable text selection/input */
+      user-select: text;
+      -webkit-user-select: text;
+      background: var(--color-bg);
+      color: var(--color-text);
+    }
+
+    .name-input:focus {
+      border-color: var(--sky);
+    }
+
+    .settings-actions {
+      display: flex;
+      gap: var(--space-sm);
+    }
+
+    .settings-actions .btn-big {
+      flex: 1;
+      font-size: var(--text-sm);
+      min-height: var(--touch-std);
+    }
+
+    /* ---- Danger zone --------------------------------------------------- */
+    .danger-btn {
+      width: 100%;
+      margin-top: var(--space-sm);
+      padding: var(--space-sm);
+      background: none;
+      border: 2px dashed var(--coral-light);
+      border-radius: var(--radius-md);
+      color: var(--coral);
+      font-family: var(--font-body);
+      font-size: var(--text-xs);
+      cursor: pointer;
+      min-height: var(--touch-min);
+    }
+
+    /* ---- Responsive ---------------------------------------------------- */
+    @media (min-width: 600px) {
+      .app-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .app-story-full {
+        grid-column: span 1;
+        flex-direction: column;
+        min-height: 150px;
+      }
+
+      .app-story-full .app-emoji { font-size: 3.8rem; }
+      .app-story-full .app-label { font-size: var(--text-md); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ======================================================================
+     HEADER
+     ====================================================================== -->
+<header class="header fade-in">
+  <div class="greeting" id="greeting-text">Good morning, Friend! 👋</div>
+  <div class="date-line" id="date-line"></div>
+</header>
+
+<!-- ======================================================================
+     PROGRESS BANNER — days done this week + dot row
+     ====================================================================== -->
+<section class="progress-banner fade-in" style="animation-delay: 0.05s" aria-label="This week's progress">
+  <div>
+    <div class="progress-label" id="week-label">This week</div>
+    <div class="progress-sub" id="week-sub">Keep going!</div>
+  </div>
+  <div class="progress-dots" id="progress-dots" role="img" aria-label="Days completed this week">
+    <!-- Dots injected by JS -->
+  </div>
+</section>
+
+<!-- ======================================================================
+     APP GRID
+     ====================================================================== -->
+<main class="app-grid" role="main" aria-label="Learning activities">
+
+  <!-- Today's Story -->
+  <a class="app-btn app-story app-story-full fade-in"
+     style="animation-delay: 0.10s"
+     href="../social-stories/"
+     aria-label="Today's Story">
+    <span class="app-emoji" aria-hidden="true">📖</span>
+    <span class="app-label">Today's Story</span>
+  </a>
+
+  <!-- Sound Blender -->
+  <a class="app-btn app-sound fade-in"
+     style="animation-delay: 0.15s"
+     href="../phonics-blender/"
+     aria-label="Sound Blender — phonics practice">
+    <span class="app-emoji" aria-hidden="true">🔊</span>
+    <span class="app-label">Sound Blender</span>
+  </a>
+
+  <!-- Word Cards -->
+  <a class="app-btn app-words fade-in"
+     style="animation-delay: 0.20s"
+     href="../sight-words/"
+     aria-label="Word Cards — sight word practice">
+    <span class="app-emoji" aria-hidden="true">🃏</span>
+    <span class="app-label">Word Cards</span>
+  </a>
+
+  <!-- Number Fun -->
+  <a class="app-btn app-number fade-in"
+     style="animation-delay: 0.25s"
+     href="../number-sense/"
+     aria-label="Number Fun — counting and number sense">
+    <span class="app-emoji" aria-hidden="true">🔢</span>
+    <span class="app-label">Number Fun</span>
+  </a>
+
+  <!-- Math Games -->
+  <a class="app-btn app-math fade-in"
+     style="animation-delay: 0.30s"
+     href="../math-within-10/"
+     aria-label="Math Games — adding and subtracting">
+    <span class="app-emoji" aria-hidden="true">➕</span>
+    <span class="app-label">Math Games</span>
+  </a>
+
+</main>
+
+<!-- ======================================================================
+     STAR FOOTER
+     ====================================================================== -->
+<footer class="star-footer">
+  <div class="star-total" aria-label="Total stars earned">
+    <span class="star-total-icon" aria-hidden="true">⭐</span>
+    <span id="star-count">0</span>
+    <span style="font-size: var(--text-sm); color: var(--color-text-muted); font-family: var(--font-body);">stars</span>
+  </div>
+
+  <button class="settings-btn"
+          id="settings-btn"
+          aria-label="Settings"
+          aria-expanded="false"
+          aria-controls="settings-panel">
+    ⚙️
+  </button>
+</footer>
+
+<!-- ======================================================================
+     SETTINGS PANEL
+     ====================================================================== -->
+<div class="settings-panel"
+     id="settings-panel"
+     role="dialog"
+     aria-modal="true"
+     aria-label="Settings">
+  <div class="settings-sheet">
+    <h2 class="settings-title">Settings ⚙️</h2>
+
+    <div class="settings-row">
+      <label for="name-input">Child's name</label>
+      <input
+        type="text"
+        id="name-input"
+        class="name-input"
+        placeholder="Friend"
+        maxlength="24"
+        autocomplete="given-name"
+        autocorrect="off"
+        autocapitalize="words"
+        spellcheck="false"
+      />
+    </div>
+
+    <div class="settings-actions">
+      <button class="btn-big btn-sky"  id="save-name-btn">Save ✓</button>
+      <button class="btn-big"          id="close-settings-btn" style="background: var(--color-bg); color: var(--color-text); box-shadow: none;">Cancel</button>
+    </div>
+
+    <button class="danger-btn" id="reset-btn">
+      Reset all progress…
+    </button>
+  </div>
+</div>
+
+<!-- ======================================================================
+     SCRIPTS
+     ====================================================================== -->
+<script type="module">
+  // Import shared progress utilities
+  import {
+    getChildName,
+    setChildName,
+    getStars,
+    getWeekProgress,
+    getSightWordsLearned,
+    resetAll,
+  } from '../_shared/progress.js';
+
+  // -------------------------------------------------------------------------
+  // Constants — adjust as the curriculum advances
+  // -------------------------------------------------------------------------
+  const CURRENT_MONTH = 1;
+  const CURRENT_WEEK  = 1;
+
+  // -------------------------------------------------------------------------
+  // Greeting helpers
+  // -------------------------------------------------------------------------
+  function timeOfDay() {
+    const h = new Date().getHours();
+    if (h < 12) return 'morning';
+    if (h < 17) return 'afternoon';
+    return 'evening';
+  }
+
+  const GREETINGS = [
+    name => `Good ${timeOfDay()}, ${name}! 👋`,
+    name => `Hi ${name}! Ready to learn? 🚀`,
+    name => `Let's go, ${name}! 🌟`,
+    name => `Hello, ${name}! Time to play! 🎉`,
+    name => `Welcome back, ${name}! 💪`,
+  ];
+
+  function pickGreeting(name) {
+    // Deterministic-ish pick based on day of year so it rotates daily
+    const day = Math.floor(Date.now() / 86_400_000);
+    return GREETINGS[day % GREETINGS.length](name);
+  }
+
+  // -------------------------------------------------------------------------
+  // Date line
+  // -------------------------------------------------------------------------
+  function formatDateLine() {
+    return new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Progress dot rendering
+  // -------------------------------------------------------------------------
+  function renderDots(completed, total) {
+    const container = document.getElementById('progress-dots');
+    container.innerHTML = '';
+    for (let i = 1; i <= total; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'dot' + (i <= completed ? ' done' : '');
+      dot.setAttribute('aria-label', i <= completed ? `Day ${i} done` : `Day ${i} not done yet`);
+      container.appendChild(dot);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Week sub-text
+  // -------------------------------------------------------------------------
+  function weekSubText(completed, total) {
+    if (completed === 0)   return 'Let\'s start today! 🌱';
+    if (completed === total) return 'Perfect week! You\'re amazing! 🏆';
+    const left = total - completed;
+    return left === 1 ? 'Just one more day! 🔥' : `${left} days to go this week`;
+  }
+
+  // -------------------------------------------------------------------------
+  // Main render
+  // -------------------------------------------------------------------------
+  function render() {
+    const name    = getChildName();
+    const stars   = getStars();
+    const { completed, total } = getWeekProgress(CURRENT_MONTH, CURRENT_WEEK);
+
+    // Greeting + date
+    document.getElementById('greeting-text').textContent = pickGreeting(name);
+    document.getElementById('date-line').textContent     = formatDateLine();
+
+    // Week progress
+    document.getElementById('week-label').textContent = `Week ${CURRENT_WEEK} of Month ${CURRENT_MONTH}`;
+    document.getElementById('week-sub').textContent   = weekSubText(completed, total);
+    renderDots(completed, total);
+
+    // Stars
+    document.getElementById('star-count').textContent = stars.toLocaleString();
+
+    // Populate name input in settings
+    document.getElementById('name-input').value = name === 'Friend' ? '' : name;
+  }
+
+  // -------------------------------------------------------------------------
+  // Settings panel
+  // -------------------------------------------------------------------------
+  const panel      = document.getElementById('settings-panel');
+  const settingsBtn = document.getElementById('settings-btn');
+  const nameInput  = document.getElementById('name-input');
+
+  function openSettings() {
+    panel.classList.add('open');
+    settingsBtn.setAttribute('aria-expanded', 'true');
+    // Focus name input after transition
+    setTimeout(() => nameInput.focus(), 300);
+  }
+
+  function closeSettings() {
+    panel.classList.remove('open');
+    settingsBtn.setAttribute('aria-expanded', 'false');
+    settingsBtn.focus();
+  }
+
+  settingsBtn.addEventListener('click', openSettings);
+
+  document.getElementById('close-settings-btn').addEventListener('click', closeSettings);
+
+  // Tap backdrop to close
+  panel.addEventListener('click', (e) => {
+    if (e.target === panel) closeSettings();
+  });
+
+  // Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panel.classList.contains('open')) closeSettings();
+  });
+
+  document.getElementById('save-name-btn').addEventListener('click', () => {
+    const val = nameInput.value.trim();
+    setChildName(val || 'Friend');
+    closeSettings();
+    render();
+    // Brief celebrate animation on the greeting
+    const greetEl = document.getElementById('greeting-text');
+    greetEl.classList.remove('bounce-once');
+    void greetEl.offsetWidth; // reflow to restart animation
+    greetEl.classList.add('bounce-once');
+  });
+
+  // Save on Enter key in name field
+  nameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('save-name-btn').click();
+  });
+
+  // Reset all
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    const confirmed = window.confirm(
+      'Reset ALL progress? This cannot be undone.\n\nTap OK only if you are sure.'
+    );
+    if (confirmed) {
+      resetAll({ confirmed: true });
+      closeSettings();
+      render();
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // App buttons — add a brief tap animation before navigation
+  // -------------------------------------------------------------------------
+  document.querySelectorAll('.app-btn').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      // Let the bounce animation play briefly, then navigate
+      e.preventDefault();
+      const href = this.href;
+      this.classList.add('bounce-once');
+      setTimeout(() => { window.location.href = href; }, 200);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Init
+  // -------------------------------------------------------------------------
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,525 @@
+/* ============================================================
+   Harker Prep Curriculum — Shared Design System
+   Touch-first, iPad-optimized for a 4-year-old learner.
+   Design principles:
+     • All interactive targets ≥ 52px (most ≥ 64px)
+     • Bright, friendly palette — never harsh
+     • Generous rounded corners (16–32px)
+     • Large readable type — minimum 20px body
+     • Zero hover-only states (touch has no hover)
+     • Smooth, gentle animations only
+   ============================================================ */
+
+/* ---- Google Fonts ----------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+
+/* ---- Reset & box model ------------------------------------ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* ---- Design tokens ---------------------------------------- */
+:root {
+  /* Brand palette */
+  --coral:          #FF6B6B;
+  --coral-dark:     #E55050;
+  --coral-light:    #FFB3B3;
+  --sky:            #4ECDC4;
+  --sky-dark:       #38B2AA;
+  --sky-light:      #A8EDE9;
+  --yellow:         #FFE66D;
+  --yellow-dark:    #F5D800;
+  --yellow-light:   #FFF5B0;
+  --green:          #95E1D3;
+  --green-dark:     #5DCCB8;
+  --green-light:    #CFFAF4;
+  --purple:         #C9B1FF;
+  --purple-dark:    #9B7EF5;
+  --purple-light:   #EDE6FF;
+  --orange:         #FFB347;
+  --orange-dark:    #E59400;
+
+  /* Semantic aliases */
+  --color-primary:      var(--coral);
+  --color-primary-dark: var(--coral-dark);
+  --color-accent:       var(--sky);
+  --color-accent-dark:  var(--sky-dark);
+  --color-reward:       var(--yellow);
+  --color-success:      var(--green);
+  --color-bg:           #FFFBF0;
+  --color-surface:      #FFFFFF;
+  --color-text:         #2D2D2D;
+  --color-text-muted:   #777777;
+  --color-border:       rgba(0, 0, 0, 0.08);
+  --color-shadow:       rgba(0, 0, 0, 0.12);
+
+  /* Typography */
+  --font-body:    'Nunito', 'Rounded Mplus 1c', system-ui, sans-serif;
+  --font-display: 'Fredoka One', 'Nunito', system-ui, sans-serif;
+  --text-xs:      16px;
+  --text-sm:      20px;   /* body minimum */
+  --text-md:      24px;
+  --text-lg:      32px;   /* heading minimum */
+  --text-xl:      42px;
+  --text-xxl:     56px;
+  --text-hero:    72px;
+
+  /* Spacing */
+  --space-xs:  8px;
+  --space-sm:  12px;
+  --space-md:  20px;
+  --space-lg:  32px;
+  --space-xl:  48px;
+  --space-xxl: 64px;
+
+  /* Touch targets */
+  --touch-min:  52px;
+  --touch-std:  64px;
+  --touch-big:  80px;
+  --touch-hero: 100px;
+
+  /* Radii */
+  --radius-sm:   12px;
+  --radius-md:   20px;
+  --radius-lg:   28px;
+  --radius-xl:   40px;
+  --radius-pill: 9999px;
+
+  /* Shadows */
+  --shadow-sm:  0 2px 8px  var(--color-shadow);
+  --shadow-md:  0 4px 16px var(--color-shadow);
+  --shadow-lg:  0 8px 32px var(--color-shadow);
+  --shadow-btn: 0 5px 0 rgba(0, 0, 0, 0.18);
+  --shadow-btn-press: 0 2px 0 rgba(0, 0, 0, 0.18);
+
+  /* Transitions */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --duration-fast:   120ms;
+  --duration-normal: 250ms;
+  --duration-slow:   450ms;
+}
+
+/* ---- Base document ---------------------------------------- */
+html {
+  height: 100%;
+  /* Prevent iOS text size adjustment */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  /* Disable text selection for game-like feel */
+  user-select: none;
+  -webkit-user-select: none;
+  overflow-x: hidden;
+}
+
+/* Re-enable selection inside readable text areas */
+p, .selectable { user-select: text; -webkit-user-select: text; }
+
+/* ---- Typography ------------------------------------------- */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  line-height: 1.2;
+  margin: 0;
+}
+
+h1 { font-size: var(--text-xl); }
+h2 { font-size: var(--text-lg); }
+h3 { font-size: var(--text-md); }
+
+p {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-sm);
+}
+
+/* ---- Accessibility helper --------------------------------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Focus ring (keyboard/switch access) ------------------ */
+:focus-visible {
+  outline: 4px solid var(--sky);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   COMPONENT: .btn-big
+   Primary action button — large, friendly, bounces on press.
+   ============================================================ */
+.btn-big {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: var(--touch-big);
+  min-width: var(--touch-big);
+  padding: var(--space-sm) var(--space-lg);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: var(--shadow-btn);
+  transition:
+    transform var(--duration-fast) var(--ease-bounce),
+    box-shadow var(--duration-fast) ease;
+  /* No hover — touch device */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.btn-big:active {
+  transform: translateY(3px) scale(0.97);
+  box-shadow: var(--shadow-btn-press);
+}
+
+/* Color variants */
+.btn-big.btn-sky    { background: var(--sky);    color: #fff; box-shadow: 0 5px 0 var(--sky-dark); }
+.btn-big.btn-yellow { background: var(--yellow);  color: var(--color-text); box-shadow: 0 5px 0 var(--yellow-dark); }
+.btn-big.btn-green  { background: var(--green);   color: var(--color-text); box-shadow: 0 5px 0 var(--green-dark); }
+.btn-big.btn-purple { background: var(--purple);  color: #fff; box-shadow: 0 5px 0 var(--purple-dark); }
+.btn-big.btn-orange { background: var(--orange);  color: #fff; box-shadow: 0 5px 0 var(--orange-dark); }
+
+/* ============================================================
+   COMPONENT: .card
+   Rounded white surface for content panels.
+   ============================================================ */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-sm  { padding: var(--space-md); border-radius: var(--radius-md); }
+.card-xs  { padding: var(--space-sm); border-radius: var(--radius-sm); }
+
+/* Colored card variants */
+.card-coral  { background: var(--coral-light); }
+.card-sky    { background: var(--sky-light);   }
+.card-yellow { background: var(--yellow-light);}
+.card-green  { background: var(--green-light); }
+.card-purple { background: var(--purple-light);}
+
+/* ============================================================
+   COMPONENT: .letter-card
+   Big, bold display for a single letter (alphabet / phonics).
+   ============================================================ */
+.letter-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  line-height: 1;
+  cursor: pointer;
+  border: 4px solid transparent;
+  transition:
+    transform var(--duration-fast) var(--ease-bounce),
+    border-color var(--duration-normal) ease;
+  /* Large enough to be a comfortable touch target */
+}
+
+.letter-card:active {
+  transform: scale(0.92);
+}
+
+.letter-card.selected {
+  border-color: var(--coral);
+  background: var(--coral-light);
+}
+
+/* ============================================================
+   COMPONENT: .star-reward
+   Single gold star for reward display.
+   ============================================================ */
+.star-reward {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xl);
+  line-height: 1;
+  width: 56px;
+  height: 56px;
+  /* CSS star if emoji not desired; using emoji by default */
+}
+
+.star-reward::before {
+  content: '⭐';
+}
+
+.star-reward.earned {
+  animation: star-pop var(--duration-slow) var(--ease-bounce) forwards;
+}
+
+.star-reward.dim::before {
+  content: '☆';
+  opacity: 0.35;
+}
+
+/* ============================================================
+   COMPONENT: .progress-dots
+   Row of dots showing days completed in a week (5 dots).
+   ============================================================ */
+.progress-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+}
+
+.progress-dots .dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-border);
+  border: 3px solid rgba(0, 0, 0, 0.10);
+  transition: background var(--duration-normal) var(--ease-bounce),
+              transform var(--duration-normal) var(--ease-bounce);
+}
+
+.progress-dots .dot.done {
+  background: var(--coral);
+  border-color: var(--coral-dark);
+  transform: scale(1.15);
+}
+
+.progress-dots .dot.today {
+  background: var(--yellow);
+  border-color: var(--yellow-dark);
+  transform: scale(1.25);
+  box-shadow: 0 0 0 4px rgba(255, 230, 109, 0.35);
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+/* .bounce — gentle looping bounce for attention */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0);    }
+  40%       { transform: translateY(-12px); }
+  60%       { transform: translateY(-6px);  }
+}
+
+.bounce {
+  animation: bounce 1.6s var(--ease-smooth) infinite;
+}
+
+.bounce-once {
+  animation: bounce 0.5s var(--ease-bounce) 1;
+}
+
+/* .celebrate — star burst overlay for big reward moments */
+@keyframes celebrate {
+  0%   { transform: scale(0) rotate(-10deg); opacity: 0; }
+  50%  { transform: scale(1.2) rotate(8deg);  opacity: 1; }
+  70%  { transform: scale(0.9) rotate(-4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);   opacity: 1; }
+}
+
+.celebrate {
+  animation: celebrate var(--duration-slow) var(--ease-bounce) forwards;
+}
+
+/* star-pop — used by .star-reward.earned */
+@keyframes star-pop {
+  0%   { transform: scale(0);   opacity: 0; }
+  60%  { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+/* fade-in — gentle entrance */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.fade-in {
+  animation: fade-in var(--duration-normal) var(--ease-smooth) both;
+}
+
+/* wiggle — playful error shake */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg);   }
+  20%       { transform: rotate(-6deg);  }
+  40%       { transform: rotate(6deg);   }
+  60%       { transform: rotate(-4deg);  }
+  80%       { transform: rotate(4deg);   }
+}
+
+.wiggle {
+  animation: wiggle 0.45s ease-in-out 1;
+}
+
+/* pulse-ring — glow ring for "tap me" hint */
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0   rgba(255, 107, 107, 0.55); }
+  70%  { box-shadow: 0 0 0 18px rgba(255, 107, 107, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(255, 107, 107, 0);    }
+}
+
+.pulse-ring {
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
+/* confetti piece (JS-generated divs) */
+.confetti-piece {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 9999;
+  animation: confetti-fall 2.5s ease-in forwards;
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(-50px) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* ============================================================
+   LAYOUT HELPERS
+   ============================================================ */
+.flex        { display: flex; }
+.flex-col    { display: flex; flex-direction: column; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.gap-sm  { gap: var(--space-sm); }
+.gap-md  { gap: var(--space-md); }
+.gap-lg  { gap: var(--space-lg); }
+.wrap    { flex-wrap: wrap; }
+
+.text-center { text-align: center; }
+.text-big    { font-size: var(--text-lg); font-family: var(--font-display); }
+.text-hero   { font-size: var(--text-hero); font-family: var(--font-display); }
+.text-muted  { color: var(--color-text-muted); }
+
+.w-full  { width: 100%; }
+.mt-auto { margin-top: auto; }
+.mb-md   { margin-bottom: var(--space-md); }
+.mb-lg   { margin-bottom: var(--space-lg); }
+.p-md    { padding: var(--space-md); }
+.p-lg    { padding: var(--space-lg); }
+
+/* Full-screen page shell */
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-lg) var(--space-md);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Safe area insets for notched iPads */
+.page {
+  padding-top: max(var(--space-lg), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
+  padding-left:  max(var(--space-md), env(safe-area-inset-left));
+  padding-right: max(var(--space-md), env(safe-area-inset-right));
+}
+
+/* Floating home/back button */
+.home-btn {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  width: var(--touch-std);
+  height: var(--touch-std);
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  text-decoration: none;
+  z-index: 200;
+  transition: transform var(--duration-fast) var(--ease-bounce);
+}
+
+.home-btn:active {
+  transform: scale(0.90);
+}
+
+/* ============================================================
+   STAR BURST OVERLAY
+   Full-screen celebration overlay (inserted via JS).
+   ============================================================ */
+.star-burst-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10rem;
+  pointer-events: none;
+  z-index: 9998;
+  animation: celebrate var(--duration-slow) var(--ease-bounce) forwards;
+}
+
+/* ============================================================
+   RESPONSIVE — larger screens get more breathing room
+   ============================================================ */
+@media (min-width: 768px) {
+  :root {
+    --text-sm:  22px;
+    --text-md:  26px;
+    --text-lg:  36px;
+    --text-xl:  48px;
+    --text-xxl: 64px;
+    --text-hero: 80px;
+  }
+
+  .letter-card {
+    width: 160px;
+    height: 160px;
+  }
+}
+
+/* ============================================================
+   PRINT — hide interactive chrome, show content cleanly
+   ============================================================ */
+@media print {
+  .btn-big, .home-btn, .progress-dots { display: none; }
+  body { background: #fff; color: #000; }
+  .card { box-shadow: none; border: 1px solid #ddd; }
+}
