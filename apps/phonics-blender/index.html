@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Phonics Blender</title>
+
+  <!-- Google Fonts: Fredoka One (display) + Nunito (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet" />
+
+  <!-- Shared base styles -->
+  <link rel="stylesheet" href="../_shared/styles.css" />
+
+  <style>
+    /* ── App-specific layout ─────────────────────────────────── */
+    :root {
+      --card-letter-size: min(28vw, 170px);
+      --tab-h: 60px;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100dvh;
+      padding: 0 0 env(safe-area-inset-bottom, 0);
+      background: linear-gradient(160deg, #FFF8E7 0%, #E8F5FF 100%);
+      overflow-y: auto;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .app-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 70px 0;
+      position: relative;
+    }
+
+    .app-title {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      color: #FF6B6B;
+      margin: 0;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Filter tabs ─────────────────────────────────────────── */
+    .filter-scroll-wrap {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 14px 16px 6px;
+    }
+    .filter-scroll-wrap::-webkit-scrollbar { display: none; }
+
+    .filter-tabs {
+      display: flex;
+      gap: 10px;
+      width: max-content;
+    }
+
+    .filter-tab {
+      height: var(--tab-h);
+      padding: 0 22px;
+      border-radius: 999px;
+      border: 3px solid transparent;
+      background: #fff;
+      font-family: 'Fredoka One', sans-serif;
+      font-size: 1.05rem;
+      color: #555;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      white-space: nowrap;
+    }
+    .filter-tab:active { transform: scale(0.95); }
+    .filter-tab.active {
+      background: #FF6B6B;
+      color: #fff;
+      border-color: #E55555;
+    }
+
+    /* ── Progress row ────────────────────────────────────────── */
+    .progress-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 6px 16px;
+    }
+
+    .word-counter {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      color: #888;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 260px;
+    }
+
+    .progress-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ddd;
+      transition: background 0.3s;
+    }
+    .progress-dot.done { background: #4ECDC4; }
+    .progress-dot.current { background: #FF6B6B; transform: scale(1.3); }
+
+    /* ── Letter cards area ───────────────────────────────────── */
+    .cards-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(10px, 3vw, 24px);
+      padding: 20px 16px 10px;
+      width: 100%;
+    }
+
+    .nav-arrow {
+      background: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 52px;
+      height: 52px;
+      font-size: 1.6rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      transition: transform 0.12s;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-arrow:active { transform: scale(0.9); }
+    .nav-arrow:disabled { opacity: 0.3; cursor: default; }
+
+    .letters-row {
+      display: flex;
+      gap: clamp(10px, 3vw, 20px);
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Individual letter card */
+    .letter-card {
+      width: var(--card-letter-size);
+      height: var(--card-letter-size);
+      border-radius: 22px;
+      background: #fff;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(3rem, 14vw, 6.5rem);
+      cursor: pointer;
+      transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1),
+                  box-shadow 0.15s,
+                  background 0.2s;
+      position: relative;
+      border: 4px solid transparent;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .letter-card:active {
+      transform: scale(0.93);
+    }
+
+    /* Card color variants by position */
+    .letter-card.pos-0 { color: #FF6B6B; }
+    .letter-card.pos-1 { color: #4ECDC4; }
+    .letter-card.pos-2 { color: #A8E6CF; color: #5BAD8F; }
+
+    /* Activated state */
+    .letter-card.active {
+      transform: scale(1.12);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    }
+    .letter-card.active.pos-0 { background: #FFF0F0; border-color: #FF6B6B; }
+    .letter-card.active.pos-1 { background: #F0FFFE; border-color: #4ECDC4; }
+    .letter-card.active.pos-2 { background: #EEFBF4; border-color: #5BAD8F; }
+
+    /* Blend animation: slide to center */
+    .letter-card.blending {
+      animation: slide-blend 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    .letter-card.blending.pos-0 { animation-name: slide-blend-left; }
+    .letter-card.blending.pos-2 { animation-name: slide-blend-right; }
+
+    @keyframes slide-blend-left {
+      0%   { transform: translateX(0) scale(1); }
+      50%  { transform: translateX(calc(var(--card-letter-size) * 0.6)) scale(1.05); }
+      100% { transform: translateX(0) scale(1); }
+    }
+    @keyframes slide-blend-right {
+      0%   { transform: translateX(0) scale(1); }
+      50%  { transform: translateX(calc(var(--card-letter-size) * -0.6)) scale(1.05); }
+      100% { transform: translateX(0) scale(1); }
+    }
+    @keyframes slide-blend {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    /* ── BLEND button ────────────────────────────────────────── */
+    .blend-btn-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 10px 16px 6px;
+    }
+
+    .blend-btn {
+      background: #FF6B6B;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 0 48px;
+      height: 72px;
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #C94B4B, 0 8px 24px rgba(255,107,107,0.35);
+      transition: transform 0.1s, box-shadow 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .blend-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #C94B4B, 0 4px 12px rgba(255,107,107,0.25);
+    }
+    .blend-btn:disabled {
+      background: #ccc;
+      box-shadow: 0 4px 0 #aaa;
+      cursor: default;
+    }
+
+    .blend-arrow {
+      font-size: 1.3em;
+      line-height: 1;
+    }
+
+    /* ── Word illustration card ──────────────────────────────── */
+    .illustration-card {
+      width: calc(100% - 32px);
+      max-width: 420px;
+      margin: 10px auto 20px;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+      padding: 28px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.3,0.64,1);
+      pointer-events: none;
+      min-height: 180px;
+    }
+    .illustration-card.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .illustration-emoji {
+      font-size: clamp(4rem, 18vw, 7rem);
+      line-height: 1;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+    }
+
+    .illustration-word {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.8rem, 8vw, 3rem);
+      color: #FF6B6B;
+      letter-spacing: 0.06em;
+    }
+
+    .illustration-letters {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #aaa;
+      letter-spacing: 0.25em;
+    }
+
+    /* ── Reward overlay ──────────────────────────────────────── */
+    #reward-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #reward-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .reward-stars {
+      font-size: 4rem;
+      animation: bounce-stars 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+    @keyframes bounce-stars {
+      0%   { transform: scale(0); }
+      100% { transform: scale(1); }
+    }
+
+    .reward-msg {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.6rem, 6vw, 2.8rem);
+      color: #FF6B6B;
+      text-align: center;
+      padding: 0 20px;
+      animation: bounce-stars 0.6s 0.15s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .reward-continue-btn {
+      margin-top: 10px;
+      animation: bounce-stars 0.6s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    /* ── Practiced badge on letter card ─────────────────────── */
+    .practiced-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 28px;
+      height: 28px;
+      background: #4ECDC4;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    /* ── Vowel color coding ──────────────────────────────────── */
+    .letter-card.vowel-a { --letter-color: #FF6B6B; }
+    .letter-card.vowel-i { --letter-color: #A78BFA; }
+    .letter-card.vowel-o { --letter-color: #F59E0B; }
+    .letter-card.vowel-u { --letter-color: #34D399; }
+    .letter-card.vowel-e { --letter-color: #60A5FA; }
+
+    /* Middle card (vowel) accent */
+    .letter-card.pos-1 {
+      border-width: 5px;
+    }
+    .letter-card.pos-1.vowel-a { border-color: #FFCDD2; color: #FF6B6B; }
+    .letter-card.pos-1.vowel-i { border-color: #DDD6FE; color: #A78BFA; }
+    .letter-card.pos-1.vowel-o { border-color: #FDE68A; color: #F59E0B; }
+    .letter-card.pos-1.vowel-u { border-color: #A7F3D0; color: #34D399; }
+    .letter-card.pos-1.vowel-e { border-color: #BFDBFE; color: #60A5FA; }
+
+    /* ── Responsive fine-tuning ──────────────────────────────── */
+    @media (min-width: 600px) {
+      :root { --card-letter-size: 160px; }
+    }
+    @media (min-width: 800px) {
+      :root { --card-letter-size: 190px; }
+      .blend-btn { height: 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Home button -->
+  <a href="../" class="home-btn" aria-label="Home">🏠</a>
+
+  <!-- Header -->
+  <header class="app-header">
+    <h1 class="app-title">🔤 Phonics Blender</h1>
+  </header>
+
+  <!-- Word-family filter tabs -->
+  <div class="filter-scroll-wrap" role="navigation" aria-label="Word family filter">
+    <div class="filter-tabs" id="filter-tabs"></div>
+  </div>
+
+  <!-- Progress row -->
+  <div class="progress-row">
+    <span class="word-counter" id="word-counter">Word 1 of 12</span>
+    <div class="progress-dots" id="progress-dots" role="list" aria-label="Word progress"></div>
+  </div>
+
+  <!-- Letter cards + navigation arrows -->
+  <div class="cards-area" aria-label="Letter cards">
+    <button class="nav-arrow" id="btn-prev" aria-label="Previous word">◀</button>
+
+    <div class="letters-row" id="letters-row">
+      <div class="letter-card pos-0" id="card-0" role="button" tabindex="0" aria-label="First letter"></div>
+      <div class="letter-card pos-1" id="card-1" role="button" tabindex="0" aria-label="Middle letter (vowel)"></div>
+      <div class="letter-card pos-2" id="card-2" role="button" tabindex="0" aria-label="Last letter"></div>
+    </div>
+
+    <button class="nav-arrow" id="btn-next" aria-label="Next word">▶</button>
+  </div>
+
+  <!-- BLEND button -->
+  <div class="blend-btn-wrap">
+    <button class="blend-btn" id="blend-btn" aria-label="Blend the word">
+      BLEND! <span class="blend-arrow">→</span>
+    </button>
+  </div>
+
+  <!-- Illustration card (shown after blend) -->
+  <div class="illustration-card" id="illustration-card" aria-live="polite" aria-atomic="true">
+    <div class="illustration-emoji" id="illus-emoji"></div>
+    <div class="illustration-word" id="illus-word"></div>
+    <div class="illustration-letters" id="illus-letters"></div>
+  </div>
+
+  <!-- Reward overlay (every 5 blends) -->
+  <div id="reward-overlay" role="dialog" aria-modal="true" aria-label="Great job reward">
+    <div class="reward-stars">⭐🌟⭐</div>
+    <div class="reward-msg" id="reward-msg">Amazing! You read 5 words!</div>
+    <button class="btn btn-primary reward-continue-btn" id="reward-continue-btn">Keep Going! 🎉</button>
+  </div>
+
+  <!-- Shared modules -->
+  <script src="../_shared/audio.js"></script>
+  <script src="../_shared/progress.js"></script>
+
+  <script>
+  /* ============================================================
+     PHONICS BLENDER — Main Application
+     ============================================================ */
+  (function () {
+    'use strict';
+
+    const APP_ID = 'phonics_blender';
+    const REWARD_EVERY = 5; // blends before reward
+
+    /* ── Word data ───────────────────────────────────────────── */
+    const WORDS = [
+      // Short-a
+      { word: 'cat', vowel: 'a', family: '-at', emoji: '🐱' },
+      { word: 'bat', vowel: 'a', family: '-at', emoji: '🦇' },
+      { word: 'sat', vowel: 'a', family: '-at', emoji: '🪑' },
+      { word: 'rat', vowel: 'a', family: '-at', emoji: '🐭' },
+      { word: 'can', vowel: 'a', family: '-an', emoji: '🥫' },
+      { word: 'man', vowel: 'a', family: '-an', emoji: '🧑' },
+      { word: 'pan', vowel: 'a', family: '-an', emoji: '🍳' },
+      { word: 'fan', vowel: 'a', family: '-an', emoji: '🌀' },
+      { word: 'cap', vowel: 'a', family: '-ap', emoji: '🧢' },
+      { word: 'map', vowel: 'a', family: '-ap', emoji: '🗺️' },
+      { word: 'nap', vowel: 'a', family: '-ap', emoji: '😴' },
+      { word: 'bag', vowel: 'a', family: '-ag', emoji: '👜' },
+      // Short-i
+      { word: 'big', vowel: 'i', family: '-ig', emoji: '🐷' },
+      { word: 'dig', vowel: 'i', family: '-ig', emoji: '⛏️' },
+      { word: 'bit', vowel: 'i', family: '-it', emoji: '🦷' },
+      { word: 'hit', vowel: 'i', family: '-it', emoji: '🏏' },
+      { word: 'sit', vowel: 'i', family: '-it', emoji: '🪑' },
+      { word: 'bin', vowel: 'i', family: '-in', emoji: '🗑️' },
+      { word: 'fin', vowel: 'i', family: '-in', emoji: '🐟' },
+      { word: 'pin', vowel: 'i', family: '-in', emoji: '📌' },
+      { word: 'win', vowel: 'i', family: '-in', emoji: '🏆' },
+      { word: 'dip', vowel: 'i', family: '-ip', emoji: '🤿' },
+      { word: 'lip', vowel: 'i', family: '-ip', emoji: '💋' },
+      { word: 'tip', vowel: 'i', family: '-ip', emoji: '💡' },
+      // Short-o
+      { word: 'dog', vowel: 'o', family: '-og', emoji: '🐶' },
+      { word: 'fog', vowel: 'o', family: '-og', emoji: '🌫️' },
+      { word: 'log', vowel: 'o', family: '-og', emoji: '🪵' },
+      { word: 'dot', vowel: 'o', family: '-ot', emoji: '⚫' },
+      { word: 'hot', vowel: 'o', family: '-ot', emoji: '🌡️' },
+      { word: 'pot', vowel: 'o', family: '-ot', emoji: '🍯' },
+      { word: 'top', vowel: 'o', family: '-op', emoji: '🪀' },
+      { word: 'hop', vowel: 'o', family: '-op', emoji: '🐇' },
+      { word: 'mop', vowel: 'o', family: '-op', emoji: '🧹' },
+      { word: 'pop', vowel: 'o', family: '-op', emoji: '🎈' },
+      { word: 'nod', vowel: 'o', family: '-od', emoji: '🙂' },
+      { word: 'box', vowel: 'o', family: '-ox', emoji: '📦' },
+      // Short-u
+      { word: 'bug', vowel: 'u', family: '-ug', emoji: '🐛' },
+      { word: 'hug', vowel: 'u', family: '-ug', emoji: '🤗' },
+      { word: 'mug', vowel: 'u', family: '-ug', emoji: '☕' },
+      { word: 'run', vowel: 'u', family: '-un', emoji: '🏃' },
+      { word: 'sun', vowel: 'u', family: '-un', emoji: '☀️' },
+      { word: 'bun', vowel: 'u', family: '-un', emoji: '🍞' },
+      { word: 'fun', vowel: 'u', family: '-un', emoji: '🎉' },
+      { word: 'cup', vowel: 'u', family: '-up', emoji: '🥤' },
+      { word: 'pup', vowel: 'u', family: '-up', emoji: '🐶' },
+      { word: 'cut', vowel: 'u', family: '-ut', emoji: '✂️' },
+      { word: 'gut', vowel: 'u', family: '-ut', emoji: '💪' },
+      { word: 'nut', vowel: 'u', family: '-ut', emoji: '🥜' },
+      { word: 'tub', vowel: 'u', family: '-ub', emoji: '🛁' },
+      // Short-e
+      { word: 'bed', vowel: 'e', family: '-ed', emoji: '🛏️' },
+      { word: 'red', vowel: 'e', family: '-ed', emoji: '🔴' },
+      { word: 'beg', vowel: 'e', family: '-eg', emoji: '🙏' },
+      { word: 'leg', vowel: 'e', family: '-eg', emoji: '🦵' },
+      { word: 'hen', vowel: 'e', family: '-en', emoji: '🐔' },
+      { word: 'men', vowel: 'e', family: '-en', emoji: '👨‍👨‍👦' },
+      { word: 'ten', vowel: 'e', family: '-en', emoji: '🔟' },
+      { word: 'jet', vowel: 'e', family: '-et', emoji: '✈️' },
+      { word: 'net', vowel: 'e', family: '-et', emoji: '🥅' },
+      { word: 'pet', vowel: 'e', family: '-et', emoji: '🐾' },
+      { word: 'wet', vowel: 'e', family: '-et', emoji: '💧' },
+      { word: 'web', vowel: 'e', family: '-eb', emoji: '🕸️' },
+    ];
+
+    /* ── Build family filter list ────────────────────────────── */
+    const FAMILIES = ['All', ...new Set(WORDS.map(w => w.family))];
+
+    /* ── State ───────────────────────────────────────────────── */
+    let filteredWords = [...WORDS];
+    let currentIndex  = 0;
+    let isBusy        = false;  // prevent double-taps during animation
+    let sessionBlends = 0;      // blends since last reward
+    let activeFamily  = 'All';
+
+    /* ── DOM refs ────────────────────────────────────────────── */
+    const filterTabsEl   = document.getElementById('filter-tabs');
+    const wordCounterEl  = document.getElementById('word-counter');
+    const progressDotsEl = document.getElementById('progress-dots');
+    const letterCards    = [
+      document.getElementById('card-0'),
+      document.getElementById('card-1'),
+      document.getElementById('card-2'),
+    ];
+    const blendBtn       = document.getElementById('blend-btn');
+    const illustCard     = document.getElementById('illustration-card');
+    const illustEmoji    = document.getElementById('illus-emoji');
+    const illustWord     = document.getElementById('illus-word');
+    const illustLetters  = document.getElementById('illus-letters');
+    const btnPrev        = document.getElementById('btn-prev');
+    const btnNext        = document.getElementById('btn-next');
+    const rewardOverlay  = document.getElementById('reward-overlay');
+    const rewardMsg      = document.getElementById('reward-msg');
+    const rewardContinue = document.getElementById('reward-continue-btn');
+
+    /* ── Build filter tabs ───────────────────────────────────── */
+    function buildFilterTabs() {
+      filterTabsEl.innerHTML = '';
+      FAMILIES.forEach(family => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-tab' + (family === activeFamily ? ' active' : '');
+        btn.textContent = family;
+        btn.setAttribute('aria-pressed', family === activeFamily ? 'true' : 'false');
+        btn.addEventListener('click', () => selectFamily(family));
+        filterTabsEl.appendChild(btn);
+      });
+    }
+
+    function selectFamily(family) {
+      if (family === activeFamily) return;
+      activeFamily = family;
+      filteredWords = family === 'All' ? [...WORDS] : WORDS.filter(w => w.family === family);
+      currentIndex  = 0;
+      buildFilterTabs();
+      hideIllustration();
+      renderWord();
+    }
+
+    /* ── Render the current word ─────────────────────────────── */
+    function renderWord() {
+      const wordObj = filteredWords[currentIndex];
+      const letters = wordObj.word.split('');
+      const practiced = ProgressUtils.getPracticed(APP_ID);
+      const isPracticed = practiced.includes(wordObj.word);
+
+      // Update each letter card
+      letterCards.forEach((card, i) => {
+        // Clear previous state
+        card.className = `letter-card pos-${i}`;
+        const letter = letters[i] || '';
+        card.textContent = letter;
+        card.setAttribute('aria-label', `Letter ${letter.toUpperCase()}`);
+
+        // Vowel styling on middle card
+        if (i === 1) {
+          card.classList.add('vowel-' + wordObj.vowel);
+        }
+
+        // Practiced badge
+        if (isPracticed && i === 2) {
+          const badge = document.createElement('div');
+          badge.className = 'practiced-badge';
+          badge.textContent = '✓';
+          badge.setAttribute('aria-label', 'Practiced');
+          card.appendChild(badge);
+        }
+      });
+
+      // Reset blend button
+      blendBtn.disabled = false;
+
+      // Update progress UI
+      updateProgress();
+      updateNav();
+    }
+
+    /* ── Progress dots & counter ─────────────────────────────── */
+    function updateProgress() {
+      const total = filteredWords.length;
+      const practiced = ProgressUtils.getPracticed(APP_ID);
+
+      wordCounterEl.textContent = `Word ${currentIndex + 1} of ${total}`;
+
+      // Dots: show up to 20, then summarize
+      const maxDots = 20;
+      progressDotsEl.innerHTML = '';
+      const showCount = Math.min(total, maxDots);
+      for (let i = 0; i < showCount; i++) {
+        const dot = document.createElement('div');
+        const wordObj = filteredWords[i];
+        dot.className = 'progress-dot';
+        if (i === currentIndex) dot.classList.add('current');
+        else if (practiced.includes(wordObj.word)) dot.classList.add('done');
+        dot.setAttribute('role', 'listitem');
+        dot.setAttribute('aria-label',
+          i === currentIndex ? 'Current word' :
+          practiced.includes(wordObj.word) ? 'Practiced' : 'Not yet practiced');
+        progressDotsEl.appendChild(dot);
+      }
+    }
+
+    /* ── Navigation ──────────────────────────────────────────── */
+    function updateNav() {
+      btnPrev.disabled = currentIndex === 0;
+      btnNext.disabled = currentIndex === filteredWords.length - 1;
+    }
+
+    function goTo(index) {
+      if (isBusy) return;
+      currentIndex = Math.max(0, Math.min(filteredWords.length - 1, index));
+      hideIllustration();
+      renderWord();
+    }
+
+    btnPrev.addEventListener('click', () => goTo(currentIndex - 1));
+    btnNext.addEventListener('click', () => goTo(currentIndex + 1));
+
+    /* ── Letter card tap → speak phoneme ─────────────────────── */
+    letterCards.forEach((card, i) => {
+      function handleCardTap() {
+        if (isBusy) return;
+        const wordObj = filteredWords[currentIndex];
+        const letter  = wordObj.word[i];
+
+        // Activate animation
+        letterCards.forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        setTimeout(() => card.classList.remove('active'), 600);
+
+        // Speak phoneme
+        AudioUtils.speakLetter(letter);
+      }
+
+      card.addEventListener('click', handleCardTap);
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardTap(); }
+      });
+    });
+
+    /* ── BLEND button ────────────────────────────────────────── */
+    blendBtn.addEventListener('click', async () => {
+      if (isBusy) return;
+      const wordObj = filteredWords[currentIndex];
+      isBusy = true;
+      blendBtn.disabled = true;
+
+      // Trigger blend animations on all three cards
+      letterCards.forEach(card => {
+        card.classList.add('blending');
+      });
+
+      // Wait for animation
+      await new Promise(r => setTimeout(r, 500));
+      letterCards.forEach(card => card.classList.remove('blending'));
+
+      // Show illustration
+      showIllustration(wordObj);
+
+      // Speak the word
+      await AudioUtils.speakWord(wordObj.word);
+
+      // Track progress
+      ProgressUtils.markPracticed(APP_ID, wordObj.word);
+      updateProgress();
+
+      // Increment blend counter and check for reward
+      sessionBlends++;
+      const totalBlends = ProgressUtils.increment(APP_ID, 'blends');
+
+      if (sessionBlends > 0 && sessionBlends % REWARD_EVERY === 0) {
+        await showReward(sessionBlends);
+      }
+
+      isBusy = false;
+    });
+
+    /* ── Illustration card ───────────────────────────────────── */
+    function showIllustration(wordObj) {
+      illustEmoji.textContent  = wordObj.emoji;
+      illustWord.textContent   = wordObj.word;
+      illustLetters.textContent = wordObj.word.split('').join(' · ');
+      illustCard.classList.add('visible');
+    }
+
+    function hideIllustration() {
+      illustCard.classList.remove('visible');
+    }
+
+    /* ── Confetti ────────────────────────────────────────────── */
+    function launchConfetti(count = 60) {
+      const colors = ['#FF6B6B','#4ECDC4','#FFE66D','#A8E6CF','#C9B1FF','#FF8E53'];
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.cssText = `
+          left: ${Math.random() * 100}vw;
+          top: -20px;
+          background: ${colors[Math.floor(Math.random() * colors.length)]};
+          animation-delay: ${Math.random() * 1.2}s;
+          animation-duration: ${1.8 + Math.random() * 1.5}s;
+          transform: rotate(${Math.random() * 360}deg);
+          border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+        `;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 3500);
+      }
+    }
+
+    /* ── Reward overlay ──────────────────────────────────────── */
+    function showReward(count) {
+      return new Promise(resolve => {
+        const wordLabel = count === 1 ? 'word' : 'words';
+        rewardMsg.textContent = `Amazing! You read ${count} ${wordLabel}!`;
+        rewardOverlay.classList.add('visible');
+        launchConfetti(80);
+        AudioUtils.speakPhrase(`Amazing! You read ${count} ${wordLabel}!`);
+
+        rewardContinue.onclick = () => {
+          rewardOverlay.classList.remove('visible');
+          resolve();
+        };
+      });
+    }
+
+    /* ── Keyboard navigation support ─────────────────────────── */
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft')  goTo(currentIndex - 1);
+      if (e.key === 'ArrowRight') goTo(currentIndex + 1);
+      if (e.key === 'Enter' && document.activeElement === blendBtn) {
+        // handled by click
+      }
+    });
+
+    /* ── Init ────────────────────────────────────────────────── */
+    function init() {
+      // Load session blend count (not persisted across sessions, just from counter)
+      sessionBlends = 0; // fresh each session; total tracked in localStorage
+      buildFilterTabs();
+      renderWord();
+    }
+
+    init();
+
+  })();
+  </script>
+</body>
+</html>
