@@ -31,7 +31,7 @@ This repository supports a 6-month curriculum to prepare a gifted 4-year-old for
 
 ## PR Self-Review
 
-After pushing a branch and creating a PR, always run `/code-review --comment` against it before considering the work done. Read each changed file as if seeing it for the first time — not as the author who just wrote it. Post findings as inline comments, then fix every actionable one in a follow-up commit before merging. The phoneme-map coverage gap on PR #3 is a concrete example of what a fresh read catches.
+After pushing a branch and creating a PR, always run `/code-review --comment` against it before considering the work done. Read each changed file as if seeing it for the first time — not as the author who just wrote it. Post findings as inline comments, then fix every actionable one in a follow-up commit before merging.
 
 ## LLM API Model Names
 
