@@ -45,9 +45,29 @@ APP_VERSION = "1.0.0"
 CONFIG_DIR = pathlib.Path.home() / ".harker-prep"
 PROFILE_FILE = CONFIG_DIR / "profile.json"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+STYLE_TEMPLATES_FILE = CONFIG_DIR / "style_templates.json"
 
 KEYCHAIN_SERVICE = "harker-prep"
 KEYCHAIN_ACCOUNT = "gemini-api-key"
+
+BUILTIN_TEMPLATES: dict[str, str] = {
+    "Watercolor": (
+        "Soft watercolor illustration, warm colors, friendly child-safe characters, "
+        "simple white or light background, no scary or violent elements, suitable for children 3-5."
+    ),
+    "Cartoon": (
+        "Bold cartoon illustration, bright primary colors, thick outlines, expressive characters, "
+        "simple white background, child-friendly, suitable for ages 3-5."
+    ),
+    "Colored Pencil": (
+        "Colored pencil illustration, soft textures, pastel tones, hand-drawn feel, "
+        "white background, gentle and warm, suitable for children 3-5."
+    ),
+    "Pixel Art": (
+        "Retro pixel art illustration, 16-bit style, bright colors, simple pixel characters, "
+        "no scary elements, charming and playful, suitable for children 3-5."
+    ),
+}
 
 PHONICS_LEVELS = [
     "CVC short-a",
@@ -518,6 +538,7 @@ class StoryGeneratorApp(tk.Tk):
     def _load_config(self) -> None:
         self._config = load_json_file(CONFIG_FILE)
         self._profile = load_json_file(PROFILE_FILE)
+        self._style_templates = self._load_style_templates()
         self._migrate_key_to_keychain()
 
     def _migrate_key_to_keychain(self) -> None:
@@ -726,16 +747,39 @@ class StoryGeneratorApp(tk.Tk):
         sg_lf = ttk.LabelFrame(sidebar_scroll.inner, text="Image Style Guide", padding=8)
         sg_lf.pack(fill=tk.X, **pad)
 
+        # Template selector row
+        ttk.Label(sg_lf, text="Template").pack(anchor=tk.W)
+        template_row = ttk.Frame(sg_lf)
+        template_row.pack(fill=tk.X, pady=(0, 6))
+
+        self._template_var = tk.StringVar(value="Watercolor")
+        template_names = list(self._style_templates.keys())
+        self._template_menu = ttk.OptionMenu(
+            template_row, self._template_var,
+            template_names[0] if template_names else "",
+            *template_names[1:],
+        )
+        self._template_menu.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4))
+        ttk.Button(
+            template_row,
+            text="Load",
+            command=self._apply_style_template,
+            style="Small.TButton",
+        ).pack(side=tk.LEFT)
+
+        ttk.Separator(sg_lf, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=4)
+
+        # Style guide text area
         ttk.Label(
             sg_lf,
-            text="Edit to change the art style for generated images\n(e.g. cartoon, colored pencil, pixel art):",
+            text="Edit to customise the art style:",
             wraplength=230,
             justify=tk.LEFT,
         ).pack(anchor=tk.W, pady=(0, 4))
 
         self._style_guide_text = tk.Text(
             sg_lf,
-            height=6,
+            height=5,
             wrap=tk.WORD,
             font=("TkDefaultFont", 11),
             relief=tk.SOLID,
@@ -747,11 +791,28 @@ class StoryGeneratorApp(tk.Tk):
             self._config.get("style_guide", _DEFAULT_STYLE_GUIDE),
         )
 
+        # Save current text as a named template
+        ttk.Separator(sg_lf, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=4)
+        ttk.Label(sg_lf, text="Save as template").pack(anchor=tk.W)
+        save_row = ttk.Frame(sg_lf)
+        save_row.pack(fill=tk.X, pady=(0, 4))
+
+        self._template_name_var = tk.StringVar()
+        ttk.Entry(save_row, textvariable=self._template_name_var).pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4)
+        )
         ttk.Button(
-            sg_lf,
-            text="Save Style Guide",
-            command=self._save_style_guide,
-        ).pack(anchor=tk.E)
+            save_row,
+            text="Save",
+            command=self._save_style_template,
+            style="Small.TButton",
+        ).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Button(
+            save_row,
+            text="Delete",
+            command=self._delete_style_template,
+            style="Small.TButton",
+        ).pack(side=tk.LEFT)
 
     def _save_style_guide(self) -> None:
         guide = self._style_guide_text.get("1.0", tk.END).strip()
@@ -761,6 +822,76 @@ class StoryGeneratorApp(tk.Tk):
 
     def _get_style_guide(self) -> str:
         return self._style_guide_text.get("1.0", tk.END).strip() or _DEFAULT_STYLE_GUIDE
+
+    # ------------------------------------------------------------------
+    # Style templates
+    # ------------------------------------------------------------------
+
+    def _load_style_templates(self) -> dict[str, str]:
+        """Merge built-in templates with user-saved ones (user overrides win)."""
+        user = load_json_file(STYLE_TEMPLATES_FILE)
+        return {**BUILTIN_TEMPLATES, **user}
+
+    def _refresh_template_menu(self) -> None:
+        self._style_templates = self._load_style_templates()
+        menu = self._template_menu["menu"]
+        menu.delete(0, tk.END)
+        for name in self._style_templates:
+            menu.add_command(
+                label=name,
+                command=lambda n=name: self._template_var.set(n),
+            )
+        if self._template_var.get() not in self._style_templates:
+            first = next(iter(self._style_templates), "")
+            self._template_var.set(first)
+
+    def _apply_style_template(self) -> None:
+        name = self._template_var.get()
+        text = self._style_templates.get(name, "")
+        if not text:
+            return
+        self._style_guide_text.delete("1.0", tk.END)
+        self._style_guide_text.insert("1.0", text)
+        self._template_name_var.set(name)
+        self._set_status(f"Loaded template: {name}")
+
+    def _save_style_template(self) -> None:
+        name = self._template_name_var.get().strip()
+        if not name:
+            messagebox.showwarning("Name Required", "Enter a template name.")
+            return
+        if name in BUILTIN_TEMPLATES:
+            if not messagebox.askyesno(
+                "Override Built-in",
+                f'"{name}" is a built-in template. Override it?',
+            ):
+                return
+        text = self._style_guide_text.get("1.0", tk.END).strip()
+        user = load_json_file(STYLE_TEMPLATES_FILE)
+        user[name] = text
+        save_json_file(STYLE_TEMPLATES_FILE, user)
+        self._refresh_template_menu()
+        self._template_var.set(name)
+        self._set_status(f"Template saved: {name}")
+
+    def _delete_style_template(self) -> None:
+        name = self._template_var.get()
+        if name in BUILTIN_TEMPLATES:
+            messagebox.showwarning(
+                "Cannot Delete Built-in",
+                f'"{name}" is a built-in template and cannot be deleted.',
+            )
+            return
+        user = load_json_file(STYLE_TEMPLATES_FILE)
+        if name not in user:
+            messagebox.showwarning("Not Found", f'"{name}" is not a saved template.')
+            return
+        if not messagebox.askyesno("Delete Template", f'Delete template "{name}"?'):
+            return
+        del user[name]
+        save_json_file(STYLE_TEMPLATES_FILE, user)
+        self._refresh_template_menu()
+        self._set_status(f"Template deleted: {name}")
 
     def _build_content(self) -> None:
         self._notebook = ttk.Notebook(self._content)
