@@ -30,6 +30,12 @@ try:
 except ImportError:
     GENAI_AVAILABLE = False
 
+try:
+    import keyring
+    KEYRING_AVAILABLE = True
+except ImportError:
+    KEYRING_AVAILABLE = False
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -39,6 +45,9 @@ APP_VERSION = "1.0.0"
 CONFIG_DIR = pathlib.Path.home() / ".harker-prep"
 PROFILE_FILE = CONFIG_DIR / "profile.json"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+
+KEYCHAIN_SERVICE = "harker-prep"
+KEYCHAIN_ACCOUNT = "gemini-api-key"
 
 PHONICS_LEVELS = [
     "CVC short-a",
@@ -223,6 +232,33 @@ def slugify(text: str) -> str:
     text = re.sub(r"[\s_-]+", "-", text)
     text = re.sub(r"^-+|-+$", "", text)
     return text or "story"
+
+
+def keychain_get() -> Optional[str]:
+    if not KEYRING_AVAILABLE:
+        return None
+    try:
+        return keyring.get_password(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT) or None
+    except Exception:
+        return None
+
+
+def keychain_set(key: str) -> None:
+    if not KEYRING_AVAILABLE:
+        return
+    try:
+        keyring.set_password(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT, key)
+    except Exception:
+        pass
+
+
+def keychain_delete() -> None:
+    if not KEYRING_AVAILABLE:
+        return
+    try:
+        keyring.delete_password(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT)
+    except Exception:
+        pass
 
 
 def check_vocabulary(text: str, phonics_level: str, extra_sight_words: list[str]) -> list[str]:
@@ -482,6 +518,14 @@ class StoryGeneratorApp(tk.Tk):
     def _load_config(self) -> None:
         self._config = load_json_file(CONFIG_FILE)
         self._profile = load_json_file(PROFILE_FILE)
+        self._migrate_key_to_keychain()
+
+    def _migrate_key_to_keychain(self) -> None:
+        """One-time migration: move api_key from config.json into Keychain."""
+        old_key = self._config.pop("api_key", None)
+        if old_key and KEYRING_AVAILABLE and not keychain_get():
+            keychain_set(old_key)
+            self._save_config()  # persist the removal of api_key from config
 
     def _save_config(self) -> None:
         save_json_file(CONFIG_FILE, self._config)
@@ -667,14 +711,16 @@ class StoryGeneratorApp(tk.Tk):
         self._remember_key_var = tk.BooleanVar(value=bool(self._config.get("remember_key", False)))
         ttk.Checkbutton(
             api_lf,
-            text="Remember key",
+            text="Remember key (Keychain)",
             variable=self._remember_key_var,
             command=self._on_remember_key_changed,
         ).pack(anchor=tk.W)
 
-        # Restore saved key if present
-        if self._remember_key_var.get() and self._config.get("api_key"):
-            self._api_key_var.set(self._config["api_key"])
+        # Restore saved key from Keychain if "Remember key" is on
+        if self._remember_key_var.get():
+            saved_key = keychain_get()
+            if saved_key:
+                self._api_key_var.set(saved_key)
 
         # ---- Style Guide section ----
         sg_lf = ttk.LabelFrame(sidebar_scroll.inner, text="Image Style Guide", padding=8)
@@ -831,8 +877,7 @@ class StoryGeneratorApp(tk.Tk):
         remember = self._remember_key_var.get()
         self._config["remember_key"] = remember
         if not remember:
-            self._config.pop("api_key", None)
-        # Key itself is only written on first successful use in _get_api_key().
+            keychain_delete()
         self._save_config()
 
     def _get_api_key(self) -> Optional[str]:
@@ -846,8 +891,15 @@ class StoryGeneratorApp(tk.Tk):
             return None
         if self._remember_key_var.get():
             self._config["remember_key"] = True
-            self._config["api_key"] = key
             self._save_config()
+            if KEYRING_AVAILABLE:
+                keychain_set(key)
+            else:
+                messagebox.showwarning(
+                    "Keychain Unavailable",
+                    "keyring is not installed — API key was not saved.\n"
+                    "Run: pip install keyring",
+                )
         return key
 
     # ------------------------------------------------------------------
