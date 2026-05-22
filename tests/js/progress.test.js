@@ -27,15 +27,16 @@ describe('export contract', () => {
     'markSightWord', 'isSightWordLearned', 'getSightWordsLearned', 'resetAll',
   ];
 
+  const allExports = {
+    markDayComplete, isDayComplete, getWeekProgress,
+    addStars, getStars,
+    markSightWord, isSightWordLearned, getSightWordsLearned,
+    setChildName, getChildName, resetAll,
+    getPracticed, markPracticed, increment,
+  };
+
   it.each(required)('%s is exported as a function', (name) => {
-    const exports = {
-      markDayComplete, isDayComplete, getWeekProgress,
-      addStars, getStars,
-      markSightWord, isSightWordLearned, getSightWordsLearned,
-      setChildName, getChildName, resetAll,
-      getPracticed, markPracticed, increment,
-    };
-    expect(typeof exports[name]).toBe('function');
+    expect(typeof allExports[name]).toBe('function');
   });
 });
 

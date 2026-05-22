@@ -22,15 +22,15 @@ describe('export contract', () => {
 // from the raw letter name, OR simply that speakLetter does not throw.
 // ---------------------------------------------------------------------------
 describe('phoneme map coverage', () => {
-  it('speakLetter does not throw for any letter a–z', () => {
+  it('speakLetter resolves for any letter a–z', async () => {
     for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
-      expect(() => audio.speakLetter(letter)).not.toThrow();
+      await expect(audio.speakLetter(letter)).resolves.toBeUndefined();
     }
   });
 
-  it('handles uppercase letters without throwing', () => {
+  it('handles uppercase letters by resolving', async () => {
     for (const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') {
-      expect(() => audio.speakLetter(letter)).not.toThrow();
+      await expect(audio.speakLetter(letter)).resolves.toBeUndefined();
     }
   });
 });
