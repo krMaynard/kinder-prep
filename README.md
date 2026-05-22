@@ -11,7 +11,8 @@ By the end of 6 months, the child should be able to:
 - Understand letter-sound relationships (phonics)
 - Blend sounds to decode simple CVC words (cat, dog, sun)
 - Read simple sight words (Dolch Pre-K and Kindergarten lists)
-- Read short 3–5 word sentences
+- Read short sentences and simple books independently
+- Answer basic comprehension questions about what was read
 
 **Math**
 - Count reliably to 20 (and beyond)
@@ -19,6 +20,7 @@ By the end of 6 months, the child should be able to:
 - Understand one-to-one correspondence
 - Perform simple addition and subtraction within 10
 - Recognize basic shapes and patterns
+- Understand basic measurement concepts (longer/shorter, heavier/lighter)
 
 ## Structure
 
@@ -26,7 +28,7 @@ By the end of 6 months, the child should be able to:
 /curriculum     - Week-by-week lesson plans
 /apps           - Interactive learning tools and games
 /assessments    - Progress tracking and milestone checks
-/resources      - Reference materials and printables
+/resources      - Reference materials, printables, and admission standards
 ```
 
 ## Timeline
@@ -43,3 +45,5 @@ By the end of 6 months, the child should be able to:
 ## Target School
 
 The Harker School — a rigorous independent school in the San Jose area. Kindergarten admission assesses school readiness including pre-literacy and pre-numeracy skills.
+
+See [`resources/harker-admission-standards.md`](resources/harker-admission-standards.md) for a detailed breakdown of what the assessment evaluates.
