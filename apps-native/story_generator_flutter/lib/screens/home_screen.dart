@@ -25,11 +25,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _apiKeyObscured = true;
   String _selectedTemplate = 'Watercolor';
+  late int _pageCount;
 
   @override
   void initState() {
     super.initState();
     final state = context.read<AppState>();
+    _pageCount = state.pageCount;
     _childNameCtrl = TextEditingController(text: state.profile.childName);
     _favCharCtrl = TextEditingController(text: state.profile.favoriteCharacter);
     _themeCtrl = TextEditingController(text: state.theme);
@@ -67,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
       remember: state.rememberKey,
     );
     await state.saveStyleGuide(_styleGuideCtrl.text.trim());
+    state.pageCount = _pageCount;
 
     await state.generateStory();
 
@@ -138,15 +141,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     hint: 'Default: profile favorite'),
                 _field('Sight words (comma-separated)', _sightWordsCtrl),
                 const SizedBox(height: 8),
-                Text('Page count: ${state.pageCount}',
+                Text('Page count: $_pageCount',
                     style: Theme.of(context).textTheme.labelLarge),
                 Slider(
-                  value: state.pageCount.toDouble(),
+                  value: _pageCount.toDouble(),
                   min: 4,
                   max: 8,
                   divisions: 4,
-                  label: '${state.pageCount}',
-                  onChanged: (v) => state.pageCount = v.round(),
+                  label: '$_pageCount',
+                  onChanged: (v) => setState(() => _pageCount = v.round()),
                 ),
               ],
             ),

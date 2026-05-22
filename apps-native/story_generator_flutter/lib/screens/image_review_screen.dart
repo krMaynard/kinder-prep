@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -124,12 +125,11 @@ class ImageReviewScreen extends StatelessWidget {
       }
 
       final storyJsonPath = '${storyDir.path}/story.json';
-      // Write a minimal JSON representation
-      final jsonContent = '{\n'
-          '  "title": "${story.title}",\n'
-          '  "slug": "$slug",\n'
-          '  "pages": ${pages.map((p) => '{"page":${p["page"]},"text":"${p["text"]}","image":"${p["image"]}"}'  ).toList()}\n'
-          '}';
+      final jsonContent = const JsonEncoder.withIndent('  ').convert({
+        'title': story.title,
+        'slug': slug,
+        'pages': pages,
+      });
       final storyJsonFile = await File(storyJsonPath).writeAsString(jsonContent);
       xFiles.insert(0, XFile(storyJsonFile.path, mimeType: 'application/json'));
 
