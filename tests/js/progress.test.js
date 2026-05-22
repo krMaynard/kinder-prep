@@ -159,7 +159,7 @@ describe('sight words', () => {
 // Child name
 // ---------------------------------------------------------------------------
 describe('child name', () => {
-  it('returns empty string before being set', () => {
+  it("returns 'Friend' as the default when no name has been set", () => {
     expect(getChildName()).toBe('Friend');
   });
 

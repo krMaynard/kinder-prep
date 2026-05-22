@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as audio from '../../apps/_shared/audio.js';
 
 // ---------------------------------------------------------------------------
@@ -40,6 +40,8 @@ describe('phoneme map coverage', () => {
 // reject) when SpeechSynthesis is unavailable (jsdom doesn't implement it).
 // ---------------------------------------------------------------------------
 describe('graceful degradation when SpeechSynthesis is unavailable', () => {
+  afterEach(() => vi.useRealTimers());
+
   it('speak() resolves', async () => {
     await expect(audio.speak('hello')).resolves.toBeUndefined();
   });
@@ -48,8 +50,11 @@ describe('graceful degradation when SpeechSynthesis is unavailable', () => {
     await expect(audio.speakLetter('b')).resolves.toBeUndefined();
   });
 
-  it('speakWord() resolves', async () => {
-    await expect(audio.speakWord('cat')).resolves.toBeUndefined();
+  it('speakWord() resolves without real 800ms wait', async () => {
+    vi.useFakeTimers();
+    const p = audio.speakWord('cat');
+    await vi.runAllTimersAsync();
+    await expect(p).resolves.toBeUndefined();
   });
 
   it('speakPhrase() resolves', async () => {

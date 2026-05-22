@@ -62,7 +62,7 @@ class TestCheckVocabulary:
         violations = check_vocabulary('The cat sat', 'CVC short-a', [])
         assert not any(v.lower() == 'the' for v in violations)
 
-    def test_unknown_phonics_level_flags_everything_noncomon(self):
+    def test_unknown_phonics_level_flags_everything_noncommon(self):
         # A level not in PHONICS_WORD_SETS returns empty set → non-sight words are flagged
         violations = check_vocabulary('elephant ran', 'nonexistent_level', [])
         assert any(v.lower() == 'elephant' for v in violations)
