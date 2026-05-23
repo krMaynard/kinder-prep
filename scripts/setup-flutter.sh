@@ -23,7 +23,7 @@ if ! command -v flutter &>/dev/null; then
     exit 1
 fi
 
-FLUTTER_VER=$(flutter --version 2>&1 | head -1)
+FLUTTER_VER=$(flutter --version 2>&1 | grep -m1 "Flutter " || echo "Flutter (version unknown)")
 info "$FLUTTER_VER"
 
 # ── 2. flutter pub get ───────────────────────────────────────────────────────
