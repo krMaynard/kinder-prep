@@ -62,6 +62,17 @@ You will need a **Gemini API key** from [aistudio.google.com](https://aistudio.g
 
 **Location:** `tools/story_generator.py`
 
+**Quick start:**
+```bash
+./scripts/setup-python.sh
+```
+This checks your Python version, creates a `tools/.venv` virtual environment, installs all dependencies, writes a `tools/run.sh` launcher, and opens the app. Re-run any time to repair or upgrade the environment. Pass `--no-launch` to skip auto-opening the app.
+
+After the first run, launch with:
+```bash
+./tools/run.sh
+```
+
 #### Requirements
 
 - macOS (uses Tkinter, which ships with the system Python on macOS 12+)
@@ -111,6 +122,12 @@ python3 -c "import keyring; keyring.delete_password('harker-prep', 'gemini-api-k
 ### Flutter Android App
 
 **Location:** `apps-native/story_generator_flutter/`
+
+**Quick start:**
+```bash
+./scripts/setup-flutter.sh
+```
+This verifies Flutter is installed, runs `flutter pub get`, detects any connected Android device, and interactively offers to run in dev mode, build a release APK, or install directly via `adb`.
 
 #### Requirements
 

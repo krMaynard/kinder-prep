@@ -1,3 +1,9 @@
 *.pyc
 __pycache__/
 node_modules/
+
+# Python venv (created by scripts/setup-python.sh)
+tools/.venv/
+
+# Generated launcher (created by scripts/setup-python.sh)
+tools/run.sh
