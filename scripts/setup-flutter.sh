@@ -86,10 +86,10 @@ fi
 
 echo ""
 echo "  Targets available:"
-[[ $HAS_XCODE == true ]]   && echo "    i  — run on iPad / iPhone (USB, hot-reload)"
-[[ $HAS_XCODE == true ]]   && echo "    s  — run in iOS Simulator"
-[[ $HAS_ANDROID == true ]] && echo "    a  — run on Android device (USB, hot-reload)"
-[[ $HAS_ANDROID == true ]] && echo "    apk — build release APK for sideloading"
+[[ $HAS_XCODE == true ]]   && echo "    i  — run on iPad / iPhone (USB, hot-reload)" || true
+[[ $HAS_XCODE == true ]]   && echo "    s  — run in iOS Simulator"                    || true
+[[ $HAS_ANDROID == true ]] && echo "    a  — run on Android device (USB, hot-reload)" || true
+[[ $HAS_ANDROID == true ]] && echo "    apk — build release APK for sideloading"       || true
 echo "    q  — quit (packages are ready, run manually later)"
 echo ""
 read -rp "  Choice: " CHOICE
@@ -136,8 +136,8 @@ echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${GREEN}  Setup complete!${NC}"
 echo ""
 echo "  Run from apps-native/story_generator_flutter/:"
-$HAS_XCODE   && echo -e "    ${BOLD}flutter run${NC}                       iPad/iPhone via USB"
-$HAS_XCODE   && echo -e "    ${BOLD}flutter run -d 'iPhone 16'${NC}         iOS Simulator"
-$HAS_ANDROID && echo -e "    ${BOLD}flutter run${NC}                       Android via USB"
-$HAS_ANDROID && echo -e "    ${BOLD}flutter build apk --release${NC}       sideloadable APK"
+[[ $HAS_XCODE == true ]]   && echo -e "    ${BOLD}flutter run${NC}                       iPad/iPhone via USB"   || true
+[[ $HAS_XCODE == true ]]   && echo -e "    ${BOLD}flutter run -d 'iPhone 16'${NC}         iOS Simulator"         || true
+[[ $HAS_ANDROID == true ]] && echo -e "    ${BOLD}flutter run${NC}                       Android via USB"        || true
+[[ $HAS_ANDROID == true ]] && echo -e "    ${BOLD}flutter build apk --release${NC}       sideloadable APK"       || true
 echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
