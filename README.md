@@ -119,7 +119,7 @@ python3 -c "import keyring; keyring.delete_password('harker-prep', 'gemini-api-k
 
 ---
 
-### Flutter Android App
+### Flutter App (iPad · Android tablet)
 
 **Location:** `apps-native/story_generator_flutter/`
 
@@ -127,66 +127,64 @@ python3 -c "import keyring; keyring.delete_password('harker-prep', 'gemini-api-k
 ```bash
 ./scripts/setup-flutter.sh
 ```
-This verifies Flutter is installed, runs `flutter pub get`, detects any connected Android device, and interactively offers to run in dev mode, build a release APK, or install directly via `adb`.
+The script checks Flutter, detects whether Xcode (iPad) or Android SDK is available, adds iOS platform files on first run if Xcode is found, fetches packages, and interactively offers to run or build for your target device.
 
 #### Requirements
 
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) ≥ 3.22.0
-- Android SDK with build-tools (installed automatically by Android Studio, or via `sdkmanager`)
-- A physical Android device or emulator running Android 5.0+ (API 21+)
-- A connected device with **USB debugging** enabled, or an AVD running in Android Studio
+- **iPad (recommended):** Mac with Xcode 15+ — install from the Mac App Store
+- **Android tablet:** Android Studio with SDK Platform 35 and NDK installed
 
-Verify your environment:
-
+Check your setup:
 ```bash
 flutter doctor
 ```
 
-All items under *Android toolchain* and *Connected device* should show a green check before proceeding.
+#### Running on iPad (recommended)
 
-#### Setup
+1. Connect iPad to your Mac via USB
+2. Unlock iPad and tap **Trust** when prompted
+3. Run the setup script and choose **i**, or:
 
 ```bash
 cd apps-native/story_generator_flutter
-flutter pub get
+flutter run
 ```
 
-#### Running on a device (development)
+On first run the script adds the `ios/` platform files automatically (`flutter create --platforms ios .`). Flutter selects the connected iPad and hot-reloads on save.
 
-Plug in your Android tablet via USB (or start an AVD), then:
+> **First-time signing prompt:** Xcode may ask you to add your Apple ID under *Xcode → Settings → Accounts* and select a Development Team in `ios/Runner.xcodeproj`. Free Apple IDs work for personal sideloading (7-day cert, re-run `flutter run` to renew).
 
+#### Running on Android tablet
+
+Plug in your Android tablet with USB debugging enabled:
 ```bash
 flutter run
 ```
 
-Flutter selects the connected device automatically. The app hot-reloads on save during development.
+If you see an Android SDK version error, open **Android Studio → SDK Manager** and install:
+- SDK Platform **35** (or whatever Flutter's `flutter doctor` requests)
+- **NDK** (latest stable)
 
-#### Building a release APK (sideloading)
+#### Building a release APK (Android sideloading)
 
 ```bash
 flutter build apk --release
+# APK: build/app/outputs/flutter-apk/app-release.apk
 ```
 
-The APK is written to:
-
-```
-apps-native/story_generator_flutter/build/app/outputs/flutter-apk/app-release.apk
-```
-
-Transfer it to the device (USB, Google Drive, email, Bluetooth, etc.) and open it to install. You may need to enable **Install unknown apps** for the file manager or browser you use to open the APK.
-
-> The release build is signed with the debug keystore (fine for personal sideloading; not suitable for Play Store submission).
+Transfer via USB, Google Drive, or email and tap to install. Enable **Install unknown apps** in Android Settings if prompted.
 
 #### In-app workflow
 
-1. **Profile** — enter the child's name, favorite character, and phonics level. Tap **Save Profile**.
-2. **Story Spec** — set theme, optional character override, sight words, and page count.
-3. **API Key** — paste your Gemini key; toggle *Remember key (Keystore)* to save it to the Android Keystore.
-4. **Image Style Guide** — pick a template or write a custom style; save templates by name.
-5. Tap **Generate Story** → review text on the next screen; tap any page to edit it.
-6. Tap **Generate Images** → a progress bar fills as each page is illustrated.
-7. Tap **Export Story** (share icon) to share `story.json` + PNGs via the Android share sheet — save to Files, send to Drive, etc.
+1. **Profile** — child's name, favorite character, phonics level → **Save Profile**
+2. **Story Spec** — theme, sight words, page count (4–8)
+3. **API Key** — paste your Gemini key; toggle *Remember key* to store it securely (Keychain on iOS, Keystore on Android)
+4. **Image Style Guide** — pick a template or write your own; save custom templates by name
+5. **Generate Story** → review text, tap any page to edit
+6. **Generate Images** → progress bar fills as each page is illustrated
+7. **Export Story** → shares `story.json` + PNGs via the system share sheet
 
 #### API key storage
 
-The key is stored in the **Android Keystore** via `flutter_secure_storage` with `encryptedSharedPreferences: true`. It is never written to disk in plaintext. To clear it, toggle the *Remember key* switch off inside the app.
+The key is stored in the device's secure enclave via `flutter_secure_storage` — Keychain on iOS, encrypted SharedPreferences on Android. It is never written to disk in plaintext. Toggle *Remember key* off to delete it.
