@@ -475,11 +475,15 @@
     }
 
     /* ─── Init ─── */
-    const name  = getChildName();
+    // getChildName() returns 'Friend' as fallback when no name is stored,
+    // so read localStorage directly to detect first visit (null = no name set yet).
+    let storedName = null;
+    try { storedName = localStorage.getItem('hpk_child_name'); } catch {}
+
     const stars = getStars();
 
     footerStarCount.textContent = stars;
-    renderGreeting(name, stars);
+    renderGreeting(storedName, stars);
 
     /* ─── Inline change-name flow ─── */
     changeNameBtn.addEventListener('click', () => {
