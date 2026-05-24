@@ -23,6 +23,9 @@ export const THEMES = {
     accentColor: '#FF6B6B',
     accentDark:  '#C94B4B',
     headerColor: '#FF6B6B',
+    // glowColor: used for the active-theme ring in the picker
+    // (separate from accentColor so dark themes can still have a visible ring)
+    glowColor: '#FF6B6B',
 
     // Emoji pool for math/number counters (10 items)
     counterEmojis: ['🍎', '🌟', '🐸', '🦋', '🚀', '🎈', '🍩', '🐶', '🌈', '🎁'],
@@ -44,6 +47,7 @@ export const THEMES = {
     accentColor: '#1a1a2e',
     accentDark:  '#0d0d1a',
     headerColor: '#1a1a2e',
+    glowColor: '#F5C518',   // bat-yellow — visible against the dark bubble
 
     counterEmojis: ['🦇', '⭐', '🌙', '🛡️', '💛', '🔦', '🌃', '🦸', '🌟', '🔑'],
 
@@ -62,6 +66,7 @@ export const THEMES = {
     accentColor: '#E51E25',
     accentDark:  '#A81018',
     headerColor: '#E51E25',
+    glowColor: '#E51E25',   // red ring matches Spider-Man red
 
     counterEmojis: ['🕷️', '🕸️', '❤️', '💙', '⭐', '🏙️', '🦸', '🌟', '🔵', '🔴'],
 
@@ -116,4 +121,7 @@ export function applyTheme(theme) {
   root.style.setProperty('--theme-accent',      theme.accentColor);
   root.style.setProperty('--theme-accent-dark',  theme.accentDark);
   root.style.setProperty('--theme-header',       theme.headerColor);
+  // glowColor is used for visible ring/name on the active theme bubble;
+  // kept separate so dark-accent themes (Batman) can still show a bright ring.
+  root.style.setProperty('--theme-glow',         theme.glowColor ?? theme.accentColor);
 }
