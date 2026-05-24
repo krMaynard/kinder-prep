@@ -131,6 +131,44 @@ export const THEMES = {
 
     praisePrefix: 'Shark attack! ',
   },
+
+  fighterjet: {
+    id: 'fighterjet',
+    name: 'Fighter Jet',
+    icon: '✈️',
+    character: '✈️',
+    description: 'Mach speed!',
+
+    accentColor: '#455A64',   // steel blue-grey like a fuselage
+    accentDark:  '#263238',
+    headerColor: '#455A64',
+    glowColor: '#82B1FF',     // pale sky-blue ring — bright against dark steel bubble
+
+    counterEmojis: ['✈️', '🚀', '🎯', '⭐', '💨', '🔥', '⚡', '🛩️', '🌟', '💫'],
+
+    cardGradient: 'linear-gradient(145deg, #607D8B, #263238)',
+
+    praisePrefix: 'Mach speed! ',
+  },
+
+  elsa: {
+    id: 'elsa',
+    name: 'Elsa',
+    icon: '❄️',
+    character: '❄️',
+    description: 'Let it go!',
+
+    accentColor: '#5C6BC0',   // ice-palace indigo — Elsa dress colour
+    accentDark:  '#3949AB',
+    headerColor: '#5C6BC0',
+    glowColor: '#00E5FF',     // electric ice-cyan — pops against deep indigo bubble
+
+    counterEmojis: ['❄️', '⛄', '🌨️', '✨', '💎', '💙', '🌟', '🏔️', '🫧', '🔵'],
+
+    cardGradient: 'linear-gradient(145deg, #7986CB, #1A237E)',
+
+    praisePrefix: 'Let it go! ',
+  },
 };
 
 // ── Storage ──────────────────────────────────────────────────────────────────
