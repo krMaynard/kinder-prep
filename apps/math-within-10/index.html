@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Math Games</title>
+
+  <!-- Google Fonts: Fredoka One (display) + Nunito (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet" />
+
+  <!-- Shared base styles -->
+  <link rel="stylesheet" href="../_shared/styles.css" />
+
+  <style>
+    /* ── App-specific layout ─────────────────────────────────── */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100dvh;
+      padding: 0 0 env(safe-area-inset-bottom, 0);
+      background: linear-gradient(160deg, #FFFDE7 0%, #FFF3E0 100%);
+      overflow-y: auto;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .app-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 70px 0;
+      position: relative;
+    }
+
+    .app-title {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      color: #F59E0B;
+      margin: 0;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Score row ───────────────────────────────────────────── */
+    .score-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 8px 16px 4px;
+    }
+
+    .score-display {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.1rem, 4vw, 1.5rem);
+      color: #78716C;
+      background: #fff;
+      border-radius: 999px;
+      padding: 6px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    }
+
+    .score-display .score-count {
+      color: #F59E0B;
+      font-size: 1.2em;
+    }
+
+    /* ── Mode tabs ───────────────────────────────────────────── */
+    .mode-tabs {
+      display: flex;
+      gap: 10px;
+      padding: 10px 16px 4px;
+      justify-content: center;
+    }
+
+    .mode-tab {
+      height: 56px;
+      padding: 0 28px;
+      border-radius: 999px;
+      border: 3px solid transparent;
+      background: #fff;
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1rem, 3.5vw, 1.2rem);
+      color: #92400E;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mode-tab:active { transform: scale(0.95); }
+    .mode-tab.active {
+      background: #F59E0B;
+      color: #fff;
+      border-color: #D97706;
+    }
+
+    /* ── Problem card ────────────────────────────────────────── */
+    .problem-card {
+      width: calc(100% - 32px);
+      max-width: 480px;
+      margin: 10px auto 0;
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: 0 6px 24px rgba(245,158,11,0.15), 0 2px 8px rgba(0,0,0,0.08);
+      padding: 22px 20px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* ── Equation text row ───────────────────────────────────── */
+    .equation-text {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(2rem, 8vw, 3.2rem);
+      color: #44403C;
+      letter-spacing: 0.05em;
+      line-height: 1;
+    }
+
+    /* ── Counters area ───────────────────────────────────────── */
+    .counters-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-height: 60px;
+      width: 100%;
+    }
+
+    .counter-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: center;
+      align-items: center;
+      max-width: 260px;
+    }
+
+    .counter {
+      font-size: clamp(32px, 8vw, 46px);
+      line-height: 1;
+      display: inline-block;
+      transition: opacity 0.2s;
+    }
+
+    .counter.gone {
+      opacity: 0.15;
+      text-decoration: line-through;
+    }
+
+    .operator-symbol {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.8rem, 6vw, 2.6rem);
+      color: #F59E0B;
+      line-height: 1;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .equals-q {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.8rem, 6vw, 2.6rem);
+      color: #78716C;
+      line-height: 1;
+      white-space: nowrap;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    /* ── Answer grid ─────────────────────────────────────────── */
+    .answer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 360px;
+      margin: 6px auto 0;
+      padding: 0 4px;
+    }
+
+    .answer-btn {
+      min-height: 80px;
+      border-radius: 20px;
+      border: 3px solid #FDE68A;
+      background: #fff;
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.8rem, 7vw, 2.6rem);
+      color: #44403C;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #FDE68A, 0 6px 16px rgba(0,0,0,0.10);
+      transition: transform 0.12s, box-shadow 0.12s, background 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .answer-btn:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #FDE68A, 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .answer-btn:disabled {
+      cursor: default;
+    }
+
+    /* Feedback states */
+    .answer-btn.correct {
+      background: #D1FAE5;
+      border-color: #34D399;
+      box-shadow: 0 4px 0 #34D399, 0 6px 16px rgba(52,211,153,0.25);
+      animation: btn-bounce 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+
+    .answer-btn.wrong {
+      background: #FEE2E2;
+      border-color: #F87171;
+      box-shadow: 0 4px 0 #F87171;
+      animation: btn-wiggle 0.45s ease-in-out 1;
+    }
+
+    .answer-btn.hint {
+      background: #FEF3C7;
+      border-color: #F59E0B;
+      box-shadow: 0 4px 0 #D97706, 0 6px 16px rgba(245,158,11,0.30);
+    }
+
+    @keyframes btn-bounce {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.12); }
+      75%  { transform: scale(0.96); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes btn-wiggle {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-8px); }
+      40%       { transform: translateX(8px); }
+      60%       { transform: translateX(-5px); }
+      80%       { transform: translateX(5px); }
+    }
+
+    /* ── Session complete overlay ────────────────────────────── */
+    #session-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,253,231,0.94);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      padding: 20px;
+      text-align: center;
+    }
+    #session-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .session-emoji {
+      font-size: clamp(4rem, 15vw, 6rem);
+      animation: pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+    }
+
+    .session-title {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.8rem, 7vw, 3rem);
+      color: #F59E0B;
+      animation: pop-in 0.6s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .session-score {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.1rem, 4vw, 1.6rem);
+      color: #78716C;
+      animation: pop-in 0.6s 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .play-again-btn {
+      margin-top: 8px;
+      animation: pop-in 0.6s 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    @keyframes pop-in {
+      0%   { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (min-width: 500px) {
+      .counter { font-size: 44px; }
+      .answer-btn { min-height: 90px; }
+    }
+    @media (min-width: 768px) {
+      .problem-card { padding: 28px 28px 24px; }
+      .answer-grid { gap: 14px; }
+      .answer-btn { min-height: 100px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Home button -->
+  <a href="../" class="home-btn" aria-label="Home">🏠</a>
+
+  <!-- Header -->
+  <header class="app-header">
+    <h1 class="app-title">➕ Math Games</h1>
+  </header>
+
+  <!-- Score row -->
+  <div class="score-row">
+    <div class="score-display" id="score-display" aria-live="polite" aria-atomic="true">
+      ✅ <span class="score-count" id="score-count">0</span> / 10
+    </div>
+  </div>
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs" role="tablist" aria-label="Game mode">
+    <button class="mode-tab active" id="tab-add" role="tab" aria-selected="true" aria-controls="problem-area">
+      Add ➕
+    </button>
+    <button class="mode-tab" id="tab-sub" role="tab" aria-selected="false" aria-controls="problem-area">
+      Take Away ➖
+    </button>
+  </div>
+
+  <!-- Problem card -->
+  <div class="problem-card" id="problem-area" role="region" aria-label="Math problem" aria-live="polite" aria-atomic="true">
+    <!-- Equation text e.g. "3 + 2 = ?" -->
+    <div class="equation-text" id="equation-text"></div>
+
+    <!-- Visual emoji counters row -->
+    <div class="counters-area" id="counters-area" aria-hidden="true"></div>
+
+    <!-- Answer buttons 2×2 -->
+    <div class="answer-grid" id="answer-grid" role="group" aria-label="Answer choices"></div>
+  </div>
+
+  <!-- Session complete overlay -->
+  <div id="session-overlay" role="dialog" aria-modal="true" aria-label="Session complete">
+    <div class="session-emoji">🎉</div>
+    <div class="session-title">Amazing!</div>
+    <div class="session-score" id="session-score-text">You got 10 out of 10!</div>
+    <button class="btn-big btn-yellow play-again-btn" id="play-again-btn">Play Again! 🌟</button>
+  </div>
+
+  <script type="module">
+  /* ============================================================
+     MATH WITHIN 10 — Main Application
+     ============================================================ */
+  import { speakPhrase } from '../_shared/audio.js';
+  import { addStars, increment, markPracticed } from '../_shared/progress.js';
+
+  (function () {
+    'use strict';
+
+    const APP_ID = 'math_within_10';
+    const SESSION_LENGTH = 10;
+
+    /* ── Emoji counter themes ────────────────────────────────── */
+    const THEMES = ['🍎', '🌟', '🐸', '🦋', '🚀', '🎈', '🍩', '🐶', '🌈', '🎁'];
+
+    /* ── State ───────────────────────────────────────────────── */
+    let mode        = 'add';   // 'add' | 'sub'
+    let problems    = [];      // array of {a, b, answer, mode}
+    let probIndex   = 0;
+    let sessionScore = 0;
+    let wrongCount  = 0;       // wrong tries on current problem
+    let busy        = false;
+
+    /* ── DOM refs ────────────────────────────────────────────── */
+    const tabAdd          = document.getElementById('tab-add');
+    const tabSub          = document.getElementById('tab-sub');
+    const scoreCount      = document.getElementById('score-count');
+    const equationText    = document.getElementById('equation-text');
+    const countersArea    = document.getElementById('counters-area');
+    const answerGrid      = document.getElementById('answer-grid');
+    const sessionOverlay  = document.getElementById('session-overlay');
+    const sessionScoreText = document.getElementById('session-score-text');
+    const playAgainBtn    = document.getElementById('play-again-btn');
+
+    /* ── Utility ─────────────────────────────────────────────── */
+    function rnd(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function delay(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    /* ── Problem generation ──────────────────────────────────── */
+    function generateAddProblem() {
+      // a ≥ 1, b ≥ 1, a + b ≤ 10
+      const a = rnd(1, 9);
+      const maxB = Math.min(9, 10 - a);
+      const b = rnd(1, maxB);
+      return { a, b, answer: a + b, mode: 'add' };
+    }
+
+    function generateSubProblem() {
+      // a ≤ 5, b ≥ 1, b < a (result > 0)
+      const a = rnd(2, 5);         // at least 2 so there's room for b ≥ 1
+      const b = rnd(1, a - 1);
+      return { a, b, answer: a - b, mode: 'sub' };
+    }
+
+    function buildDistractors(correct, problemMode) {
+      const offsets = shuffle([-3, -2, -1, 1, 2, 3]);
+      const min = problemMode === 'sub' ? 0 : 0;
+      const max = problemMode === 'add' ? 10 : 9;
+      const seen = new Set([correct]);
+      const distractors = [];
+      for (const off of offsets) {
+        const v = correct + off;
+        if (v >= min && v <= max && !seen.has(v)) {
+          seen.add(v);
+          distractors.push(v);
+        }
+        if (distractors.length === 3) break;
+      }
+      // Fill remaining slots if needed (edge case near 0 or 10)
+      let fill = 0;
+      while (distractors.length < 3) {
+        if (!seen.has(fill)) {
+          seen.add(fill);
+          distractors.push(fill);
+        }
+        fill++;
+      }
+      return distractors;
+    }
+
+    function generateSession() {
+      problems = [];
+      for (let i = 0; i < SESSION_LENGTH; i++) {
+        problems.push(mode === 'add' ? generateAddProblem() : generateSubProblem());
+      }
+      probIndex    = 0;
+      sessionScore = 0;
+      updateScoreDisplay();
+    }
+
+    /* ── Render problem ──────────────────────────────────────── */
+    function renderProblem() {
+      wrongCount = 0;
+      busy = false;
+      const prob = problems[probIndex];
+      const theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+
+      // Equation text
+      const op = prob.mode === 'add' ? '+' : '−';
+      equationText.textContent = `${prob.a} ${op} ${prob.b} = ?`;
+
+      // Counters
+      countersArea.innerHTML = '';
+
+      if (prob.mode === 'add') {
+        // Group A
+        const groupA = document.createElement('div');
+        groupA.className = 'counter-group';
+        for (let i = 0; i < prob.a; i++) {
+          const s = document.createElement('span');
+          s.className = 'counter';
+          s.textContent = theme;
+          groupA.appendChild(s);
+        }
+        countersArea.appendChild(groupA);
+
+        // + symbol
+        const plus = document.createElement('span');
+        plus.className = 'operator-symbol';
+        plus.textContent = '+';
+        countersArea.appendChild(plus);
+
+        // Group B
+        const groupB = document.createElement('div');
+        groupB.className = 'counter-group';
+        for (let i = 0; i < prob.b; i++) {
+          const s = document.createElement('span');
+          s.className = 'counter';
+          s.textContent = theme;
+          groupB.appendChild(s);
+        }
+        countersArea.appendChild(groupB);
+
+        // = ?
+        const eq = document.createElement('span');
+        eq.className = 'equals-q';
+        eq.textContent = '= ?';
+        countersArea.appendChild(eq);
+      } else {
+        // All A counters, last B are crossed out
+        const groupAll = document.createElement('div');
+        groupAll.className = 'counter-group';
+        for (let i = 0; i < prob.a; i++) {
+          const s = document.createElement('span');
+          s.className = 'counter' + (i >= prob.a - prob.b ? ' gone' : '');
+          s.textContent = theme;
+          groupAll.appendChild(s);
+        }
+        countersArea.appendChild(groupAll);
+
+        // = ?
+        const eq = document.createElement('span');
+        eq.className = 'equals-q';
+        eq.textContent = '= ?';
+        countersArea.appendChild(eq);
+      }
+
+      // Answer buttons
+      answerGrid.innerHTML = '';
+      const distractors = buildDistractors(prob.answer, prob.mode);
+      const choices = shuffle([prob.answer, ...distractors]);
+
+      choices.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.textContent = val;
+        btn.setAttribute('data-value', val);
+        btn.setAttribute('aria-label', `Answer ${val}`);
+        btn.addEventListener('click', () => handleAnswer(btn, val, prob));
+        answerGrid.appendChild(btn);
+      });
+    }
+
+    /* ── Handle answer tap ───────────────────────────────────── */
+    async function handleAnswer(btn, chosen, prob) {
+      if (busy) return;
+
+      const allBtns = answerGrid.querySelectorAll('.answer-btn');
+      const isCorrect = chosen === prob.answer;
+
+      if (isCorrect) {
+        busy = true;
+        // Disable all buttons during feedback
+        allBtns.forEach(b => { b.disabled = true; });
+        btn.classList.add('correct');
+
+        // Build TTS phrase
+        const op     = prob.mode === 'add' ? 'plus' : 'minus';
+        const phrase = `${prob.a} ${op} ${prob.b} equals ${prob.answer}! Great!`;
+        speakPhrase(phrase);
+
+        // Confetti
+        launchConfetti(40);
+
+        // Track progress
+        addStars(1);
+        increment(APP_ID, 'correct');
+        markPracticed(APP_ID, `${prob.a}${prob.mode === 'add' ? '+' : '-'}${prob.b}`);
+        sessionScore++;
+        updateScoreDisplay();
+
+        await delay(1000);
+
+        probIndex++;
+        if (probIndex >= SESSION_LENGTH) {
+          showSessionComplete();
+        } else {
+          renderProblem();
+        }
+      } else {
+        // Wrong answer
+        wrongCount++;
+        btn.classList.add('wrong');
+        speakPhrase('Try again!');
+        await delay(600);
+        btn.classList.remove('wrong');
+
+        // After 2 wrong tries, highlight the correct button in gold
+        if (wrongCount >= 2) {
+          allBtns.forEach(b => {
+            if (Number(b.getAttribute('data-value')) === prob.answer) {
+              b.classList.add('hint');
+            }
+          });
+        }
+      }
+    }
+
+    /* ── Score display ───────────────────────────────────────── */
+    function updateScoreDisplay() {
+      scoreCount.textContent = sessionScore;
+    }
+
+    /* ── Session complete ────────────────────────────────────── */
+    function showSessionComplete() {
+      const perfect = sessionScore === SESSION_LENGTH;
+      sessionScoreText.textContent = perfect
+        ? `You got all ${SESSION_LENGTH} right! Amazing! 🌟`
+        : `You got ${sessionScore} out of ${SESSION_LENGTH}!`;
+
+      sessionOverlay.classList.add('visible');
+      launchConfetti(100);
+      speakPhrase(perfect
+        ? `Amazing! You got all ten right!`
+        : `Great job! You got ${sessionScore} out of ten!`);
+    }
+
+    /* ── Play again ──────────────────────────────────────────── */
+    playAgainBtn.addEventListener('click', () => {
+      sessionOverlay.classList.remove('visible');
+      generateSession();
+      renderProblem();
+    });
+
+    /* ── Mode tabs ───────────────────────────────────────────── */
+    tabAdd.addEventListener('click', () => {
+      if (mode === 'add') return;
+      mode = 'add';
+      tabAdd.classList.add('active');
+      tabAdd.setAttribute('aria-selected', 'true');
+      tabSub.classList.remove('active');
+      tabSub.setAttribute('aria-selected', 'false');
+      generateSession();
+      renderProblem();
+    });
+
+    tabSub.addEventListener('click', () => {
+      if (mode === 'sub') return;
+      mode = 'sub';
+      tabSub.classList.add('active');
+      tabSub.setAttribute('aria-selected', 'true');
+      tabAdd.classList.remove('active');
+      tabAdd.setAttribute('aria-selected', 'false');
+      generateSession();
+      renderProblem();
+    });
+
+    /* ── Confetti ────────────────────────────────────────────── */
+    function launchConfetti(count) {
+      const colors = ['#F59E0B','#34D399','#60A5FA','#F87171','#A78BFA','#FDE68A','#6EE7B7'];
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.cssText = `
+          left: ${Math.random() * 100}vw;
+          top: -20px;
+          background: ${colors[Math.floor(Math.random() * colors.length)]};
+          animation-delay: ${Math.random() * 1.0}s;
+          animation-duration: ${1.6 + Math.random() * 1.4}s;
+          transform: rotate(${Math.random() * 360}deg);
+          border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+        `;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 3200);
+      }
+    }
+
+    /* ── Init ────────────────────────────────────────────────── */
+    generateSession();
+    renderProblem();
+
+  })();
+  </script>
+</body>
+</html>
