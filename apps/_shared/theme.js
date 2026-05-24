@@ -74,6 +74,25 @@ export const THEMES = {
 
     praisePrefix: 'Spider-sense! ',
   },
+
+  trex: {
+    id: 'trex',
+    name: 'T-Rex',
+    icon: '🦖',
+    character: '🦖',
+    description: 'RAWR!',
+
+    accentColor: '#2E7D32',   // deep forest green
+    accentDark:  '#1B5E20',
+    headerColor: '#2E7D32',
+    glowColor: '#69F0AE',     // bright mint — pops against dark green bubble
+
+    counterEmojis: ['🦖', '🦕', '🥚', '🌿', '🌋', '🦴', '🍖', '⚡', '🌴', '🪨'],
+
+    cardGradient: 'linear-gradient(145deg, #4CAF50, #1B5E20)',
+
+    praisePrefix: 'RAWR! ',
+  },
 };
 
 // ── Storage ──────────────────────────────────────────────────────────────────
