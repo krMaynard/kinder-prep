@@ -40,7 +40,7 @@
     .app-title {
       font-family: 'Fredoka One', sans-serif;
       font-size: clamp(1.6rem, 5vw, 2.4rem);
-      color: #FF8C42;
+      color: var(--theme-header, #FF8C42);
       margin: 0;
       letter-spacing: 0.02em;
     }
@@ -71,9 +71,9 @@
     }
     .mode-tab:active { transform: scale(0.95); }
     .mode-tab.active {
-      background: #FF8C42;
+      background: var(--theme-accent, #FF8C42);
       color: #fff;
-      border-color: #E06A1A;
+      border-color: var(--theme-accent-dark, #E06A1A);
     }
 
     /* ── Session progress ────────────────────────────────────── */
@@ -93,7 +93,7 @@
       background: #ddd;
       transition: background 0.3s, transform 0.3s;
     }
-    .session-dot.done    { background: #FF8C42; }
+    .session-dot.done    { background: var(--theme-accent, #FF8C42); }
     .session-dot.current { background: #FF6B6B; transform: scale(1.4); }
 
     /* ── Main game area ──────────────────────────────────────── */
@@ -130,7 +130,7 @@
       width: min(40px, 10vw);
       height: min(40px, 10vw);
       border-radius: 50%;
-      background: #FF6B6B;
+      background: var(--theme-accent, #FF6B6B);
       transition: transform 0.2s;
     }
 
@@ -407,9 +407,13 @@
      ============================================================ */
   import { speak, speakPhrase } from '../_shared/audio.js';
   import { addStars, getStars, increment, markPracticed } from '../_shared/progress.js';
+  import { getTheme, applyTheme } from '../_shared/theme.js';
 
   (function () {
     'use strict';
+
+    const theme = getTheme();
+    applyTheme(theme);
 
     const APP_ID       = 'number_sense';
     const SESSION_LEN  = 10;   // problems per session

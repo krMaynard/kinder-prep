@@ -40,7 +40,7 @@
     .app-title {
       font-family: 'Fredoka One', sans-serif;
       font-size: clamp(1.6rem, 5vw, 2.4rem);
-      color: #F59E0B;
+      color: var(--theme-header, #F59E0B);
       margin: 0;
       letter-spacing: 0.02em;
     }
@@ -66,7 +66,7 @@
     }
 
     .score-display .score-count {
-      color: #F59E0B;
+      color: var(--theme-accent, #F59E0B);
       font-size: 1.2em;
     }
 
@@ -95,9 +95,9 @@
     }
     .mode-tab:active { transform: scale(0.95); }
     .mode-tab.active {
-      background: #F59E0B;
+      background: var(--theme-accent, #F59E0B);
       color: #fff;
-      border-color: #D97706;
+      border-color: var(--theme-accent-dark, #D97706);
     }
 
     /* ── Problem card ────────────────────────────────────────── */
@@ -229,8 +229,8 @@
 
     .answer-btn.hint {
       background: #FEF3C7;
-      border-color: #F59E0B;
-      box-shadow: 0 4px 0 #D97706, 0 6px 16px rgba(245,158,11,0.30);
+      border-color: var(--theme-accent, #F59E0B);
+      box-shadow: 0 4px 0 var(--theme-accent-dark, #D97706), 0 6px 16px rgba(245,158,11,0.30);
     }
 
     @keyframes btn-bounce {
@@ -278,7 +278,7 @@
     .session-title {
       font-family: 'Fredoka One', sans-serif;
       font-size: clamp(1.8rem, 7vw, 3rem);
-      color: #F59E0B;
+      color: var(--theme-accent, #F59E0B);
       animation: pop-in 0.6s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
     }
 
@@ -365,15 +365,20 @@
      ============================================================ */
   import { speakPhrase } from '../_shared/audio.js';
   import { addStars, increment, markPracticed } from '../_shared/progress.js';
+  import { getTheme, applyTheme } from '../_shared/theme.js';
 
   (function () {
     'use strict';
+
+    const theme = getTheme();
+    applyTheme(theme);
 
     const APP_ID = 'math_within_10';
     const SESSION_LENGTH = 10;
 
     /* ── Emoji counter themes ────────────────────────────────── */
-    const THEMES = ['🍎', '🌟', '🐸', '🦋', '🚀', '🎈', '🍩', '🐶', '🌈', '🎁'];
+    // Counter emojis come from the active character theme
+    const EMOJI_POOL = theme.counterEmojis;
 
     /* ── State ───────────────────────────────────────────────── */
     let mode        = 'add';   // 'add' | 'sub'
@@ -468,7 +473,7 @@
       wrongCount = 0;
       busy = false;
       const prob = problems[probIndex];
-      const theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+      const emoji = EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)];
 
       // Equation text
       const op = prob.mode === 'add' ? '+' : '−';
@@ -484,7 +489,7 @@
         for (let i = 0; i < prob.a; i++) {
           const s = document.createElement('span');
           s.className = 'counter';
-          s.textContent = theme;
+          s.textContent = emoji;
           groupA.appendChild(s);
         }
         countersArea.appendChild(groupA);
@@ -501,7 +506,7 @@
         for (let i = 0; i < prob.b; i++) {
           const s = document.createElement('span');
           s.className = 'counter';
-          s.textContent = theme;
+          s.textContent = emoji;
           groupB.appendChild(s);
         }
         countersArea.appendChild(groupB);
@@ -518,7 +523,7 @@
         for (let i = 0; i < prob.a; i++) {
           const s = document.createElement('span');
           s.className = 'counter' + (i >= prob.a - prob.b ? ' gone' : '');
-          s.textContent = theme;
+          s.textContent = emoji;
           groupAll.appendChild(s);
         }
         countersArea.appendChild(groupAll);

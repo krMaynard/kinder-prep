@@ -309,6 +309,80 @@
     .star-footer-count span.star-num {
       color: #3a3a5c;
     }
+
+    /* ── Theme picker ── */
+    .theme-section {
+      text-align: center;
+      margin: 0 auto 20px;
+      max-width: 420px;
+    }
+
+    .theme-label {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #aaa;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .theme-bubbles {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .theme-bubble {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .theme-bubble-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      line-height: 1;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border: 4px solid transparent;
+      transition: transform 0.15s cubic-bezier(0.34,1.56,0.64,1),
+                  border-color 0.15s,
+                  box-shadow 0.15s;
+    }
+
+    .theme-bubble:active .theme-bubble-icon {
+      transform: scale(0.92);
+    }
+
+    .theme-bubble.active .theme-bubble-icon {
+      border-color: #fff;
+      box-shadow: 0 0 0 4px var(--theme-accent, #FF6B6B),
+                  0 6px 18px rgba(0,0,0,0.20);
+      transform: scale(1.08);
+    }
+
+    .theme-bubble-name {
+      font-family: 'Fredoka One', cursive;
+      font-size: 0.78rem;
+      color: #666;
+    }
+
+    .theme-bubble.active .theme-bubble-name {
+      color: var(--theme-accent, #FF6B6B);
+    }
   </style>
 </head>
 <body>
@@ -333,6 +407,14 @@
         spellcheck="false"
       />
       <button class="inline-save-btn" id="inline-save-btn">Save</button>
+    </div>
+  </div>
+
+  <!-- ── Theme picker ── -->
+  <div class="theme-section" id="theme-section" aria-label="Choose your hero theme">
+    <span class="theme-label">Choose your hero</span>
+    <div class="theme-bubbles" id="theme-bubbles" role="radiogroup" aria-label="Theme selector">
+      <!-- Populated by JS -->
     </div>
   </div>
 
@@ -388,6 +470,11 @@
   <script type="module">
     import { getChildName, setChildName, getStars } from './_shared/progress.js';
     import { speakPhrase } from './_shared/audio.js';
+    import { THEMES, getThemeId, setThemeId, getTheme, applyTheme } from './_shared/theme.js';
+
+    /* ─── Apply saved theme immediately ─── */
+    let currentTheme = getTheme();
+    applyTheme(currentTheme);
 
     /* ─── References ─── */
     const greetingSection  = document.getElementById('greeting-section');
@@ -397,6 +484,7 @@
     const inlineNameInput  = document.getElementById('inline-name-input');
     const inlineSaveBtn    = document.getElementById('inline-save-btn');
     const footerStarCount  = document.getElementById('footer-star-count');
+    const themeBubblesEl   = document.getElementById('theme-bubbles');
 
     /* ─── Helpers ─── */
     function renderGreeting(name, stars) {
@@ -456,10 +544,11 @@
         return;
       }
 
-      // Normal greeting
+      // Normal greeting — include character emoji from active theme
       const p = document.createElement('p');
       p.className = 'greeting-text';
-      p.innerHTML = `Hi, ${escapeHtml(name)}! <span class="star-inline">⭐ ${stars}</span>`;
+      const charEmoji = currentTheme.id !== 'default' ? `${currentTheme.character} ` : '';
+      p.innerHTML = `${charEmoji}Hi, ${escapeHtml(name)}! <span class="star-inline">⭐ ${stars}</span>`;
       greetingSection.appendChild(p);
 
       changeNameRow.style.display = 'block';
@@ -526,6 +615,55 @@
         inlineNameForm.classList.remove('visible');
       }
     });
+
+    /* ─── Theme picker ─── */
+    function buildThemePicker() {
+      themeBubblesEl.innerHTML = '';
+      const activeId = getThemeId();
+
+      Object.values(THEMES).forEach(theme => {
+        const btn = document.createElement('button');
+        btn.className = 'theme-bubble' + (theme.id === activeId ? ' active' : '');
+        btn.setAttribute('role', 'radio');
+        btn.setAttribute('aria-checked', theme.id === activeId ? 'true' : 'false');
+        btn.setAttribute('aria-label', theme.name + ' theme');
+
+        // Icon circle with theme gradient background
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'theme-bubble-icon';
+        iconWrap.style.background = theme.cardGradient;
+        iconWrap.textContent = theme.icon;
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'theme-bubble-name';
+        nameEl.textContent = theme.name;
+
+        btn.appendChild(iconWrap);
+        btn.appendChild(nameEl);
+
+        btn.addEventListener('click', () => {
+          if (theme.id === getThemeId()) return; // already active
+          setThemeId(theme.id);
+          currentTheme = theme;
+          applyTheme(theme);
+
+          // Rebuild picker to update active state
+          buildThemePicker();
+
+          // Re-render greeting to show/hide character emoji
+          let storedName = null;
+          try { storedName = localStorage.getItem('hpk_child_name'); } catch {}
+          if (storedName) renderGreeting(storedName, getStars());
+
+          // Brief confirmation
+          speakPhrase(`${theme.name} theme!`);
+        });
+
+        themeBubblesEl.appendChild(btn);
+      });
+    }
+
+    buildThemePicker();
   </script>
 </body>
 </html>

@@ -45,7 +45,7 @@
     .app-title {
       font-family: 'Fredoka One', sans-serif;
       font-size: clamp(1.6rem, 5vw, 2.4rem);
-      color: #FF6B6B;
+      color: var(--theme-header, #FF6B6B);
       margin: 0;
       letter-spacing: 0.02em;
     }
@@ -82,9 +82,9 @@
     }
     .filter-tab:active { transform: scale(0.95); }
     .filter-tab.active {
-      background: #FF6B6B;
+      background: var(--theme-accent, #FF6B6B);
       color: #fff;
-      border-color: #E55555;
+      border-color: var(--theme-accent-dark, #E55555);
     }
 
     /* ── Progress row ────────────────────────────────────────── */
@@ -192,7 +192,7 @@
       transform: scale(1.12);
       box-shadow: 0 10px 30px rgba(0,0,0,0.18);
     }
-    .letter-card.active.pos-0 { background: #FFF0F0; border-color: #FF6B6B; }
+    .letter-card.active.pos-0 { background: #FFF0F0; border-color: var(--theme-accent, #FF6B6B); }
     .letter-card.active.pos-1 { background: #F0FFFE; border-color: #4ECDC4; }
     .letter-card.active.pos-2 { background: #EEFBF4; border-color: #5BAD8F; }
 
@@ -228,7 +228,7 @@
     }
 
     .blend-btn {
-      background: #FF6B6B;
+      background: var(--theme-accent, #FF6B6B);
       color: #fff;
       border: none;
       border-radius: 999px;
@@ -238,7 +238,7 @@
       font-size: clamp(1.4rem, 5vw, 2rem);
       letter-spacing: 0.04em;
       cursor: pointer;
-      box-shadow: 0 6px 0 #C94B4B, 0 8px 24px rgba(255,107,107,0.35);
+      box-shadow: 0 6px 0 var(--theme-accent-dark, #C94B4B), 0 8px 24px rgba(255,107,107,0.35);
       transition: transform 0.1s, box-shadow 0.1s;
       display: flex;
       align-items: center;
@@ -247,7 +247,7 @@
     }
     .blend-btn:active {
       transform: translateY(4px);
-      box-shadow: 0 2px 0 #C94B4B, 0 4px 12px rgba(255,107,107,0.25);
+      box-shadow: 0 2px 0 var(--theme-accent-dark, #C94B4B), 0 4px 12px rgba(255,107,107,0.25);
     }
     .blend-btn:disabled {
       background: #ccc;
@@ -454,9 +454,13 @@
      ============================================================ */
   import { speakLetter, speakWord, speakPhrase } from '../_shared/audio.js';
   import { getPracticed, markPracticed, increment } from '../_shared/progress.js';
+  import { getTheme, applyTheme } from '../_shared/theme.js';
 
   (function () {
     'use strict';
+
+    const theme = getTheme();
+    applyTheme(theme);
 
     const APP_ID = 'phonics_blender';
     const REWARD_EVERY = 5; // blends before reward

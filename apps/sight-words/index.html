@@ -40,7 +40,7 @@
     .app-title {
       font-family: 'Fredoka One', sans-serif;
       font-size: clamp(1.6rem, 5vw, 2.4rem);
-      color: #7C3AED;
+      color: var(--theme-header, #7C3AED);
       margin: 0;
       letter-spacing: 0.02em;
     }
@@ -424,9 +424,13 @@
      ============================================================ */
   import { speakWord, speakPhrase, speakPraise } from '../_shared/audio.js';
   import { markSightWord, isSightWordLearned, getSightWordsLearned, addStars } from '../_shared/progress.js';
+  import { getTheme, applyTheme } from '../_shared/theme.js';
 
   (function () {
     'use strict';
+
+    const theme = getTheme();
+    applyTheme(theme);
 
     /* ── Constants ───────────────────────────────────────────── */
     const TOTAL_WORDS = 40;
