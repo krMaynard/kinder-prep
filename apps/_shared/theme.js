@@ -93,6 +93,44 @@ export const THEMES = {
 
     praisePrefix: 'RAWR! ',
   },
+
+  racecar: {
+    id: 'racecar',
+    name: 'Race Car',
+    icon: '🏎️',
+    character: '🏎️',
+    description: 'Vroom vroom!',
+
+    accentColor: '#E65100',   // hot orange — distinct from Spider-Man red
+    accentDark:  '#BF360C',
+    headerColor: '#E65100',
+    glowColor: '#FFD740',     // checkered-flag gold ring
+
+    counterEmojis: ['🏎️', '🏁', '⚡', '🔥', '🏆', '⭐', '🎯', '🚀', '💨', '🥇'],
+
+    cardGradient: 'linear-gradient(145deg, #FF6D00, #BF360C)',
+
+    praisePrefix: 'Vroom! ',
+  },
+
+  shark: {
+    id: 'shark',
+    name: 'Shark',
+    icon: '🦈',
+    character: '🦈',
+    description: 'DUN DUN DUN!',
+
+    accentColor: '#0277BD',   // ocean blue
+    accentDark:  '#01579B',
+    headerColor: '#0277BD',
+    glowColor: '#40C4FF',     // bright sky blue — pops against dark ocean bubble
+
+    counterEmojis: ['🦈', '🐠', '🐙', '🌊', '🐟', '🐬', '⚓', '🦑', '🐚', '💙'],
+
+    cardGradient: 'linear-gradient(145deg, #0288D1, #01579B)',
+
+    praisePrefix: 'Shark attack! ',
+  },
 };
 
 // ── Storage ──────────────────────────────────────────────────────────────────
