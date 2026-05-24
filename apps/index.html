@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Harker Prep</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./_shared/styles.css" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(160deg, #FFF8E7 0%, #E8F5FF 100%);
+      min-height: 100vh;
+      padding: 24px 20px 40px;
+      overflow-x: hidden;
+    }
+
+    /* ── Greeting ── */
+    .greeting-section {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .greeting-text {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(2rem, 6vw, 3rem);
+      color: #3a3a5c;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .star-inline {
+      color: #f5a623;
+    }
+
+    /* ── Name prompt (first visit) ── */
+    .name-prompt-wrapper {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .name-prompt-label {
+      font-family: 'Fredoka One', cursive;
+      font-size: clamp(1.5rem, 5vw, 2.2rem);
+      color: #3a3a5c;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .name-prompt-input {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      padding: 12px 20px;
+      border: 3px solid #a78bfa;
+      border-radius: 50px;
+      outline: none;
+      width: min(320px, 90vw);
+      text-align: center;
+      background: #fff;
+      color: #3a3a5c;
+      transition: border-color 0.2s;
+    }
+
+    .name-prompt-input:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+    }
+
+    .name-prompt-hint {
+      font-size: 0.95rem;
+      color: #888;
+      margin-top: 8px;
+    }
+
+    /* ── Change-name row ── */
+    .change-name-row {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .change-name-btn {
+      background: none;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #7c9cbf;
+      cursor: pointer;
+      text-decoration: underline dotted;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: color 0.15s;
+    }
+
+    .change-name-btn:hover,
+    .change-name-btn:focus {
+      color: #3a6fa8;
+      outline: none;
+    }
+
+    .inline-name-form {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .inline-name-form.visible {
+      display: flex;
+    }
+
+    .inline-name-input {
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 8px 16px;
+      border: 2.5px solid #a78bfa;
+      border-radius: 50px;
+      outline: none;
+      width: min(240px, 70vw);
+      text-align: center;
+      background: #fff;
+      color: #3a3a5c;
+      transition: border-color 0.2s;
+    }
+
+    .inline-name-input:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    }
+
+    .inline-save-btn {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      background: #7c3aed;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .inline-save-btn:hover {
+      background: #6d28d9;
+    }
+
+    .inline-save-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* ── App grid ── */
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 720px;
+      margin: 0 auto 40px;
+    }
+
+    @media (max-width: 420px) {
+      .app-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .app-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 140px;
+      border-radius: 24px;
+      padding: 20px 16px 18px;
+      text-decoration: none;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.10), 0 1px 4px rgba(0, 0, 0, 0.06);
+      transition: transform 0.15s, box-shadow 0.15s;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.18);
+      pointer-events: none;
+    }
+
+    .app-card:active {
+      transform: scale(0.96);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+    }
+
+    .app-card:focus-visible {
+      outline: 3px solid rgba(255,255,255,0.9);
+      outline-offset: 3px;
+    }
+
+    /* Individual card colours */
+    .app-card--lesson {
+      background: linear-gradient(145deg, #ff7b6b, #e8423a);
+    }
+
+    .app-card--phonics {
+      background: linear-gradient(145deg, #4dd9d9, #1a9bbf);
+    }
+
+    .app-card--stories {
+      background: linear-gradient(145deg, #b97cf8, #7c3aed);
+    }
+
+    .app-card--numbers {
+      background: linear-gradient(145deg, #ffb347, #f07b1a);
+    }
+
+    .app-card--sightwords {
+      background: linear-gradient(145deg, #66d97a, #28a745);
+    }
+
+    .app-card--math {
+      background: linear-gradient(145deg, #fde74c, #e6b800);
+    }
+
+    .app-emoji {
+      font-size: 80px;
+      line-height: 1;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+    }
+
+    .app-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.35rem;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      margin-bottom: 4px;
+      line-height: 1.2;
+    }
+
+    .app-desc {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.88);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+      line-height: 1.3;
+    }
+
+    /* math card text: darken for contrast on yellow */
+    .app-card--math .app-title {
+      color: #5a3e00;
+      text-shadow: none;
+    }
+
+    .app-card--math .app-desc {
+      color: rgba(90, 62, 0, 0.8);
+      text-shadow: none;
+    }
+
+    /* ── Bottom star display ── */
+    .star-footer {
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .star-footer-label {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #888;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .star-footer-count {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.4rem;
+      color: #f5a623;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .star-footer-count span.star-num {
+      color: #3a3a5c;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Greeting section ── -->
+  <section class="greeting-section" id="greeting-section">
+    <!-- Populated by JS -->
+  </section>
+
+  <!-- ── Change-name row (hidden until name exists) ── -->
+  <div class="change-name-row" id="change-name-row" style="display:none;">
+    <button class="change-name-btn" id="change-name-btn" aria-label="Change your name">✏️ Change name</button>
+    <div class="inline-name-form" id="inline-name-form" role="form" aria-label="Update name">
+      <input
+        type="text"
+        class="inline-name-input"
+        id="inline-name-input"
+        maxlength="32"
+        placeholder="Your name…"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+      <button class="inline-save-btn" id="inline-save-btn">Save</button>
+    </div>
+  </div>
+
+  <!-- ── App grid ── -->
+  <main>
+    <nav class="app-grid" aria-label="Learning apps">
+      <a class="app-card app-card--lesson" href="./lesson-player/">
+        <span class="app-emoji" aria-hidden="true">📅</span>
+        <span class="app-title">Lesson Player</span>
+        <span class="app-desc">Today's lesson</span>
+      </a>
+
+      <a class="app-card app-card--phonics" href="./phonics-blender/">
+        <span class="app-emoji" aria-hidden="true">🔤</span>
+        <span class="app-title">Phonics Blender</span>
+        <span class="app-desc">Blend letters into words</span>
+      </a>
+
+      <a class="app-card app-card--stories" href="./social-stories/">
+        <span class="app-emoji" aria-hidden="true">📚</span>
+        <span class="app-title">Story Reader</span>
+        <span class="app-desc">Read your story</span>
+      </a>
+
+      <a class="app-card app-card--numbers" href="./number-sense/">
+        <span class="app-emoji" aria-hidden="true">🔢</span>
+        <span class="app-title">Number Sense</span>
+        <span class="app-desc">Count and subitize</span>
+      </a>
+
+      <a class="app-card app-card--sightwords" href="./sight-words/">
+        <span class="app-emoji" aria-hidden="true">💬</span>
+        <span class="app-title">Sight Words</span>
+        <span class="app-desc">Learn sight words</span>
+      </a>
+
+      <a class="app-card app-card--math" href="./math-within-10/">
+        <span class="app-emoji" aria-hidden="true">➕</span>
+        <span class="app-title">Math Games</span>
+        <span class="app-desc">Add and subtract</span>
+      </a>
+    </nav>
+  </main>
+
+  <!-- ── Star footer ── -->
+  <footer class="star-footer" id="star-footer" aria-label="Total stars earned">
+    <div class="star-footer-label">Total Stars</div>
+    <div class="star-footer-count">
+      ⭐ <span class="star-num" id="footer-star-count">0</span>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { getChildName, setChildName, getStars } from './_shared/progress.js';
+    import { speakPhrase } from './_shared/audio.js';
+
+    /* ─── References ─── */
+    const greetingSection  = document.getElementById('greeting-section');
+    const changeNameRow    = document.getElementById('change-name-row');
+    const changeNameBtn    = document.getElementById('change-name-btn');
+    const inlineNameForm   = document.getElementById('inline-name-form');
+    const inlineNameInput  = document.getElementById('inline-name-input');
+    const inlineSaveBtn    = document.getElementById('inline-save-btn');
+    const footerStarCount  = document.getElementById('footer-star-count');
+
+    /* ─── Helpers ─── */
+    function renderGreeting(name, stars) {
+      greetingSection.innerHTML = '';
+
+      if (!name) {
+        // First-visit: show name prompt
+        const wrapper = document.createElement('div');
+        wrapper.className = 'name-prompt-wrapper';
+
+        const label = document.createElement('span');
+        label.className = 'name-prompt-label';
+        label.textContent = "What's your name? 👋";
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'name-prompt-input';
+        input.id = 'name-prompt-input';
+        input.maxLength = 32;
+        input.placeholder = 'Type your name…';
+        input.autocomplete = 'off';
+        input.autocorrect = 'off';
+        input.spellcheck = false;
+        input.setAttribute('aria-label', 'Enter your name');
+
+        const hint = document.createElement('p');
+        hint.className = 'name-prompt-hint';
+        hint.textContent = 'Press Enter or tap away to save';
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(input);
+        wrapper.appendChild(hint);
+        greetingSection.appendChild(wrapper);
+
+        // Focus after paint
+        requestAnimationFrame(() => input.focus());
+
+        const saveName = () => {
+          const val = input.value.trim();
+          if (val) {
+            setChildName(val);
+            renderGreeting(val, getStars());
+            changeNameRow.style.display = 'block';
+            speakPhrase(`Hi, ${val}! Welcome to Harker Prep!`);
+          }
+        };
+
+        input.addEventListener('blur', saveName);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+          }
+        });
+
+        speakPhrase("What's your name?");
+        return;
+      }
+
+      // Normal greeting
+      const p = document.createElement('p');
+      p.className = 'greeting-text';
+      p.innerHTML = `Hi, ${escapeHtml(name)}! <span class="star-inline">⭐ ${stars}</span>`;
+      greetingSection.appendChild(p);
+
+      changeNameRow.style.display = 'block';
+      speakPhrase(`Hi, ${name}! You have ${stars} star${stars === 1 ? '' : 's'}!`);
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /* ─── Init ─── */
+    const name  = getChildName();
+    const stars = getStars();
+
+    footerStarCount.textContent = stars;
+    renderGreeting(name, stars);
+
+    /* ─── Inline change-name flow ─── */
+    changeNameBtn.addEventListener('click', () => {
+      inlineNameForm.classList.toggle('visible');
+      if (inlineNameForm.classList.contains('visible')) {
+        inlineNameInput.value = getChildName() || '';
+        requestAnimationFrame(() => inlineNameInput.focus());
+      }
+    });
+
+    function commitInlineName() {
+      const val = inlineNameInput.value.trim();
+      if (val) {
+        setChildName(val);
+        inlineNameForm.classList.remove('visible');
+        footerStarCount.textContent = getStars();
+        renderGreeting(val, getStars());
+      } else {
+        inlineNameForm.classList.remove('visible');
+      }
+    }
+
+    inlineSaveBtn.addEventListener('click', commitInlineName);
+
+    inlineNameInput.addEventListener('blur', () => {
+      // Small delay so click on Save button fires first
+      setTimeout(() => {
+        if (inlineNameForm.classList.contains('visible')) {
+          commitInlineName();
+        }
+      }, 150);
+    });
+
+    inlineNameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commitInlineName();
+      }
+      if (e.key === 'Escape') {
+        inlineNameForm.classList.remove('visible');
+      }
+    });
+  </script>
+</body>
+</html>

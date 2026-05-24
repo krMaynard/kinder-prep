@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Sight Words</title>
+
+  <!-- Google Fonts: Fredoka One (display) + Nunito (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800&display=swap" rel="stylesheet" />
+
+  <!-- Shared base styles -->
+  <link rel="stylesheet" href="../_shared/styles.css" />
+
+  <style>
+    /* ── App shell ────────────────────────────────────────────── */
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100dvh;
+      padding: 0 0 env(safe-area-inset-bottom, 0);
+      background: linear-gradient(160deg, #F0F8FF 0%, #EDE8FF 100%);
+      overflow-y: auto;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .app-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 70px 0;
+      position: relative;
+    }
+
+    .app-title {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.6rem, 5vw, 2.4rem);
+      color: #7C3AED;
+      margin: 0;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Stats row ───────────────────────────────────────────── */
+    .stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 10px 16px 4px;
+      flex-wrap: wrap;
+    }
+
+    .stat-chip {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: 1rem;
+      color: #555;
+      background: #fff;
+      border-radius: 999px;
+      padding: 6px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      white-space: nowrap;
+    }
+
+    /* ── Progress bar ─────────────────────────────────────────── */
+    .progress-bar-wrap {
+      width: calc(100% - 32px);
+      max-width: 420px;
+      height: 14px;
+      background: rgba(124, 58, 237, 0.12);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 4px auto 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #9B7EF5, #7C3AED);
+      border-radius: 999px;
+      transition: width 0.5s cubic-bezier(0.34,1.2,0.64,1);
+    }
+
+    /* ── Main stage (card + buttons) ─────────────────────────── */
+    .stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px 16px;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* ── Flashcard ───────────────────────────────────────────── */
+    .flashcard {
+      position: relative;
+      width: min(88vw, 340px);
+      height: min(60vw, 210px);
+      background: #fff;
+      border-radius: 32px;
+      box-shadow:
+        0 10px 40px rgba(124,58,237,0.18),
+        0 4px 12px rgba(0,0,0,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 28px;
+      opacity: 0;
+      transform: translateY(24px);
+      transition:
+        opacity 0.38s ease,
+        transform 0.38s cubic-bezier(0.34,1.3,0.64,1);
+    }
+
+    .flashcard.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* box indicator chip */
+    .box-chip {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      font-family: 'Fredoka One', sans-serif;
+      font-size: 0.78rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      color: #fff;
+      letter-spacing: 0.03em;
+    }
+
+    .box-chip.box-1 { background: #FF6B6B; }
+    .box-chip.box-2 { background: #4ECDC4; }
+    .box-chip.box-3 { background: #9B7EF5; }
+
+    /* the big word */
+    .flash-word {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(3.8rem, 18vw, 5.5rem);
+      line-height: 1;
+      letter-spacing: 0.02em;
+      text-align: center;
+      /* color set via inline style per box */
+    }
+
+    /* ── Action buttons ──────────────────────────────────────── */
+    .action-row {
+      display: flex;
+      gap: 14px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .action-btn {
+      flex: 1;
+      max-width: 200px;
+      min-height: 80px;
+      border: none;
+      border-radius: 22px;
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1rem, 4vw, 1.25rem);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.12s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .action-btn:active {
+      transform: translateY(4px) scale(0.97);
+    }
+
+    .btn-know {
+      background: #40C87C;
+      box-shadow: 0 6px 0 #2E9459, 0 8px 24px rgba(64,200,124,0.30);
+    }
+    .btn-know:active {
+      box-shadow: 0 2px 0 #2E9459, 0 4px 12px rgba(64,200,124,0.20);
+    }
+
+    .btn-again {
+      background: #FF6B6B;
+      box-shadow: 0 6px 0 #C94B4B, 0 8px 24px rgba(255,107,107,0.30);
+    }
+    .btn-again:active {
+      box-shadow: 0 2px 0 #C94B4B, 0 4px 12px rgba(255,107,107,0.20);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    /* ── Mini celebration (word mastered) ───────────────────── */
+    .mini-celebration {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.92);
+      z-index: 400;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+
+    .mini-celebration.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .mini-star-ring {
+      font-size: 4.5rem;
+      animation: star-ring-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .mini-msg {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.8rem, 6vw, 2.8rem);
+      color: #9B7EF5;
+      text-align: center;
+      padding: 0 20px;
+      animation: star-ring-pop 0.5s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .mini-word-display {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(2.4rem, 10vw, 4rem);
+      color: #9B7EF5;
+      animation: star-ring-pop 0.5s 0.18s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .mini-continue-btn {
+      margin-top: 8px;
+      animation: star-ring-pop 0.5s 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    @keyframes star-ring-pop {
+      0%   { transform: scale(0); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── Session complete screen ─────────────────────────────── */
+    .session-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 18px;
+      padding: 32px 20px;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      flex: 1;
+    }
+
+    .session-screen.visible {
+      display: flex;
+    }
+
+    .session-title {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(2rem, 7vw, 3rem);
+      color: #7C3AED;
+    }
+
+    .session-trophy {
+      font-size: clamp(5rem, 20vw, 8rem);
+      line-height: 1;
+      animation: star-ring-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .session-stats {
+      font-family: 'Nunito', sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.1rem, 4vw, 1.5rem);
+      color: #555;
+      line-height: 1.7;
+    }
+
+    .session-stats strong {
+      color: #7C3AED;
+      font-size: 1.2em;
+    }
+
+    /* ── Reward overlay (confetti) ───────────────────────────── */
+    #reward-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.90);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    #reward-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .reward-stars {
+      font-size: 4.2rem;
+      animation: star-ring-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .reward-msg {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: clamp(1.6rem, 6vw, 2.8rem);
+      color: #7C3AED;
+      text-align: center;
+      padding: 0 20px;
+      animation: star-ring-pop 0.6s 0.15s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .reward-continue-btn {
+      margin-top: 10px;
+      animation: star-ring-pop 0.6s 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+      background: #9B7EF5;
+      box-shadow: 0 5px 0 #7C3AED;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (min-width: 600px) {
+      .flashcard {
+        width: 340px;
+        height: 210px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Home button -->
+  <a href="../" class="home-btn" aria-label="Home">🏠</a>
+
+  <!-- Header -->
+  <header class="app-header">
+    <h1 class="app-title">💬 Sight Words</h1>
+  </header>
+
+  <!-- Stats row -->
+  <div class="stats-row" id="stats-row">
+    <span class="stat-chip" id="chip-mastered">🌟 0 mastered</span>
+    <span class="stat-chip" id="chip-learning">📚 0 learning</span>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="40" aria-valuenow="0" id="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-bar-fill" style="width: 0%"></div>
+  </div>
+
+  <!-- Main stage (flashcard + buttons) -->
+  <div class="stage" id="stage">
+    <!-- Flashcard -->
+    <div class="flashcard" id="flashcard" aria-live="polite" aria-atomic="true">
+      <span class="box-chip box-1" id="box-chip">Box 1</span>
+      <span class="flash-word" id="flash-word"></span>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="action-row" id="action-row">
+      <button class="action-btn btn-again" id="btn-again" aria-label="Show me again">
+        Show me again 🔄
+      </button>
+      <button class="action-btn btn-know" id="btn-know" aria-label="I know it">
+        I know it! ✓
+      </button>
+    </div>
+  </div>
+
+  <!-- Session complete screen -->
+  <div class="session-screen" id="session-screen" role="region" aria-label="Session complete">
+    <div class="session-trophy">🎉</div>
+    <div class="session-title">Amazing job!</div>
+    <div class="session-stats" id="session-stats"></div>
+    <button class="btn-big btn-purple" id="btn-keep-going" style="margin-top:8px;">
+      Keep going! 🚀
+    </button>
+    <button class="btn-big" id="btn-done-session" style="background:#aaa; box-shadow: 0 5px 0 #888; margin-top:4px;">
+      All done 🏠
+    </button>
+  </div>
+
+  <!-- Mini celebration (word mastered) -->
+  <div class="mini-celebration" id="mini-celebration" role="dialog" aria-modal="true" aria-label="Word mastered celebration">
+    <div class="mini-star-ring">⭐🌟⭐</div>
+    <div class="mini-msg">You know it!</div>
+    <div class="mini-word-display" id="mini-word-display"></div>
+    <button class="btn-big btn-purple mini-continue-btn" id="mini-continue-btn">Next word 🎯</button>
+  </div>
+
+  <!-- Full reward overlay (every 5 correct) -->
+  <div id="reward-overlay" role="dialog" aria-modal="true" aria-label="Great job reward">
+    <div class="reward-stars">⭐🌟⭐</div>
+    <div class="reward-msg" id="reward-msg">You're doing great!</div>
+    <button class="btn-big reward-continue-btn" id="reward-continue-btn">Keep going! 🎉</button>
+  </div>
+
+  <script type="module">
+  /* ============================================================
+     SIGHT WORDS — Leitner 3-Box Flashcard App
+     Pre-K Dolch list, 40 words
+     ============================================================ */
+  import { speakWord, speakPhrase, speakPraise } from '../_shared/audio.js';
+  import { markSightWord, isSightWordLearned, getSightWordsLearned, addStars } from '../_shared/progress.js';
+
+  (function () {
+    'use strict';
+
+    /* ── Constants ───────────────────────────────────────────── */
+    const TOTAL_WORDS = 40;
+    const SESSION_LENGTH = 8;      // cards before session complete screen
+    const CORRECT_FOR_REWARD = 5;  // correct answers before full-screen reward
+    const LS_PREFIX = 'hpk_sw_';
+
+    const BOX_COLORS = {
+      1: '#FF6B6B',  // coral
+      2: '#4ECDC4',  // sky
+      3: '#9B7EF5',  // purple
+    };
+
+    // Probability of picking from each box when available
+    // Box 1: 80%, Box 2: 20%, Box 3: occasional review only
+    const PICK_WEIGHTS = { 1: 0.80, 2: 0.18, 3: 0.02 };
+
+    /* ── Pre-K Dolch sight words ─────────────────────────────── */
+    const ALL_WORDS = [
+      'a', 'and', 'away', 'big', 'blue', 'can', 'come', 'down',
+      'find', 'for', 'funny', 'go', 'help', 'here', 'I', 'in',
+      'is', 'it', 'jump', 'little', 'look', 'make', 'me', 'my',
+      'not', 'one', 'play', 'red', 'run', 'said', 'see', 'the',
+      'three', 'to', 'two', 'up', 'we', 'where', 'yellow', 'you',
+    ];
+
+    /* ── LocalStorage helpers ────────────────────────────────── */
+    function lsGet(key) {
+      try { return localStorage.getItem(LS_PREFIX + key); } catch { return null; }
+    }
+    function lsSet(key, val) {
+      try { localStorage.setItem(LS_PREFIX + key, String(val)); } catch {}
+    }
+
+    function getBox(word) {
+      return parseInt(lsGet('box_' + word) ?? '1', 10) || 1;
+    }
+    function setBox(word, box) {
+      lsSet('box_' + word, String(box));
+    }
+
+    function getStreak(word) {
+      return parseInt(lsGet('streak_' + word) ?? '0', 10) || 0;
+    }
+    function setStreak(word, n) {
+      lsSet('streak_' + word, String(n));
+    }
+
+    /* ── State ───────────────────────────────────────────────── */
+    let currentWord    = null;
+    let sessionCount   = 0;   // cards shown this session
+    let sessionCorrect = 0;   // correct this session (for session complete screen)
+    let rewardStreak   = 0;   // consecutive corrects since last full reward
+    let isBusy         = false;
+
+    /* ── DOM refs ────────────────────────────────────────────── */
+    const chipMastered   = document.getElementById('chip-mastered');
+    const chipLearning   = document.getElementById('chip-learning');
+    const progressFill   = document.getElementById('progress-bar-fill');
+    const progressWrap   = document.getElementById('progress-bar-wrap');
+    const flashcard      = document.getElementById('flashcard');
+    const flashWord      = document.getElementById('flash-word');
+    const boxChip        = document.getElementById('box-chip');
+    const stage          = document.getElementById('stage');
+    const actionRow      = document.getElementById('action-row');
+    const btnKnow        = document.getElementById('btn-know');
+    const btnAgain       = document.getElementById('btn-again');
+    const sessionScreen  = document.getElementById('session-screen');
+    const sessionStats   = document.getElementById('session-stats');
+    const btnKeepGoing   = document.getElementById('btn-keep-going');
+    const btnDoneSession = document.getElementById('btn-done-session');
+    const miniCelebration  = document.getElementById('mini-celebration');
+    const miniWordDisplay  = document.getElementById('mini-word-display');
+    const miniContinueBtn  = document.getElementById('mini-continue-btn');
+    const rewardOverlay    = document.getElementById('reward-overlay');
+    const rewardMsg        = document.getElementById('reward-msg');
+    const rewardContinueBtn = document.getElementById('reward-continue-btn');
+
+    /* ── Progress stats helpers ──────────────────────────────── */
+    function getMasteredCount() {
+      // Words in box 3 AND marked via progress.js
+      return ALL_WORDS.filter(w => isSightWordLearned(w)).length;
+    }
+
+    function getLearningCount() {
+      // Words that have been placed in box 2 or box 3 (touched at all)
+      return ALL_WORDS.filter(w => {
+        const b = getBox(w);
+        return b === 2 || b === 3;
+      }).length;
+    }
+
+    function updateStats() {
+      const mastered = getMasteredCount();
+      const learning = getLearningCount();
+      chipMastered.textContent = `🌟 ${mastered} mastered`;
+      chipLearning.textContent = `📚 ${learning} learning`;
+      const pct = Math.round((mastered / TOTAL_WORDS) * 100);
+      progressFill.style.width = pct + '%';
+      progressWrap.setAttribute('aria-valuenow', mastered);
+    }
+
+    /* ── Leitner pick logic ──────────────────────────────────── */
+    function getWordsInBox(box) {
+      return ALL_WORDS.filter(w => getBox(w) === box);
+    }
+
+    function pickNextWord() {
+      const box1 = getWordsInBox(1);
+      const box2 = getWordsInBox(2);
+      const box3 = getWordsInBox(3).filter(w => !isSightWordLearned(w)); // only un-mastered box3
+
+      // If all words are mastered, pick any for review
+      if (box1.length === 0 && box2.length === 0 && box3.length === 0) {
+        const all = ALL_WORDS;
+        return all[Math.floor(Math.random() * all.length)];
+      }
+
+      // Build weighted pool, skipping boxes that are empty
+      const pool = [];
+      if (box1.length > 0) pool.push({ box: 1, words: box1, weight: PICK_WEIGHTS[1] });
+      if (box2.length > 0) pool.push({ box: 2, words: box2, weight: PICK_WEIGHTS[2] });
+      if (box3.length > 0) pool.push({ box: 3, words: box3, weight: PICK_WEIGHTS[3] });
+
+      // Normalize weights across available boxes
+      const totalWeight = pool.reduce((s, p) => s + p.weight, 0);
+      let rand = Math.random() * totalWeight;
+      for (const entry of pool) {
+        rand -= entry.weight;
+        if (rand <= 0) {
+          const words = entry.words;
+          // Avoid repeating the current word if there are alternatives
+          const candidates = words.length > 1 && currentWord
+            ? words.filter(w => w !== currentWord)
+            : words;
+          return candidates[Math.floor(Math.random() * candidates.length)];
+        }
+      }
+
+      // Fallback: pick from box1, then box2, then box3
+      const fallback = box1.length ? box1 : box2.length ? box2 : box3;
+      return fallback[Math.floor(Math.random() * fallback.length)];
+    }
+
+    /* ── Show a card ─────────────────────────────────────────── */
+    async function showCard(word) {
+      isBusy = true;
+      currentWord = word;
+
+      const box = getBox(word);
+
+      // Update flashcard content
+      flashcard.classList.remove('visible');
+      flashWord.textContent = word;
+      flashWord.style.color = BOX_COLORS[box] || BOX_COLORS[1];
+
+      // Update box chip
+      boxChip.textContent = 'Box ' + box;
+      boxChip.className = 'box-chip box-' + box;
+
+      // Enable/disable buttons
+      btnKnow.disabled = true;
+      btnAgain.disabled = true;
+
+      // Trigger entrance animation after brief paint delay
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          flashcard.classList.add('visible');
+        });
+      });
+
+      // Wait for animation
+      await delay(420);
+
+      // TTS reads the word
+      await speakWord(word);
+
+      btnKnow.disabled = false;
+      btnAgain.disabled = false;
+      isBusy = false;
+    }
+
+    /* ── Handle "I know it!" ─────────────────────────────────── */
+    async function handleKnow() {
+      if (isBusy) return;
+      isBusy = true;
+      btnKnow.disabled = true;
+      btnAgain.disabled = true;
+      sessionCount++;
+      sessionCorrect++;
+      rewardStreak++;
+
+      const word = currentWord;
+      const box  = getBox(word);
+      const newStreak = getStreak(word) + 1;
+      setStreak(word, newStreak);
+
+      if (box < 3) {
+        // Move up one box
+        setBox(word, box + 1);
+      }
+
+      const nowInBox = getBox(word); // re-read after potential move
+      let wasMastered = false;
+
+      // Mastered condition: was in box 3 and answered correctly (newStreak >= 1 in box 3)
+      if (box === 3 && !isSightWordLearned(word)) {
+        // Mark fully mastered
+        markSightWord(word);
+        addStars(2);
+        wasMastered = true;
+      }
+
+      updateStats();
+
+      if (wasMastered) {
+        await showMiniCelebration(word);
+      }
+
+      // Full reward every CORRECT_FOR_REWARD corrects
+      if (!wasMastered && rewardStreak > 0 && rewardStreak % CORRECT_FOR_REWARD === 0) {
+        await showRewardOverlay(rewardStreak);
+      }
+
+      // Check session end
+      if (sessionCount >= SESSION_LENGTH) {
+        showSessionComplete();
+        return;
+      }
+
+      // Next card
+      const next = pickNextWord();
+      await showCard(next);
+    }
+
+    /* ── Handle "Show me again" ──────────────────────────────── */
+    async function handleAgain() {
+      if (isBusy) return;
+      isBusy = true;
+      btnKnow.disabled = true;
+      btnAgain.disabled = true;
+      sessionCount++;
+      rewardStreak = 0; // reset reward streak on miss
+
+      const word = currentWord;
+      setStreak(word, 0); // reset consecutive streak for this word
+
+      // Check session end
+      if (sessionCount >= SESSION_LENGTH) {
+        showSessionComplete();
+        return;
+      }
+
+      // Briefly re-speak the word, then move on
+      await speakPhrase(word);
+      await delay(400);
+
+      const next = pickNextWord();
+      await showCard(next);
+    }
+
+    /* ── Mini celebration (word mastered) ───────────────────── */
+    function showMiniCelebration(word) {
+      return new Promise(resolve => {
+        miniWordDisplay.textContent = word;
+        miniCelebration.classList.add('visible');
+        speakPraise('You know it! Amazing!');
+        launchConfetti(50);
+
+        miniContinueBtn.onclick = () => {
+          miniCelebration.classList.remove('visible');
+          resolve();
+        };
+      });
+    }
+
+    /* ── Full reward overlay ─────────────────────────────────── */
+    function showRewardOverlay(count) {
+      return new Promise(resolve => {
+        rewardMsg.textContent = `Wow! ${count} in a row! You rock! 🌟`;
+        rewardOverlay.classList.add('visible');
+        launchConfetti(80);
+        speakPhrase('Amazing! You are doing so well!');
+
+        rewardContinueBtn.onclick = () => {
+          rewardOverlay.classList.remove('visible');
+          resolve();
+        };
+      });
+    }
+
+    /* ── Session complete ────────────────────────────────────── */
+    function showSessionComplete() {
+      stage.style.display = 'none';
+      sessionScreen.classList.add('visible');
+
+      const mastered = getMasteredCount();
+      sessionStats.innerHTML =
+        `You looked at <strong>${sessionCount}</strong> word${sessionCount !== 1 ? 's' : ''} today!<br>` +
+        `You knew <strong>${sessionCorrect}</strong> of them!<br>` +
+        `Total mastered: <strong>${mastered}</strong> / ${TOTAL_WORDS}`;
+
+      launchConfetti(60);
+      speakPhrase(`Amazing! You read ${sessionCorrect} words today!`);
+    }
+
+    /* ── Session complete buttons ────────────────────────────── */
+    btnKeepGoing.addEventListener('click', () => {
+      // Reset session counters and keep playing
+      sessionCount   = 0;
+      sessionCorrect = 0;
+      rewardStreak   = 0;
+      sessionScreen.classList.remove('visible');
+      stage.style.display = '';
+      const next = pickNextWord();
+      showCard(next);
+    });
+
+    btnDoneSession.addEventListener('click', () => {
+      window.location.href = '../';
+    });
+
+    /* ── Button listeners ────────────────────────────────────── */
+    btnKnow.addEventListener('click', handleKnow);
+    btnAgain.addEventListener('click', handleAgain);
+
+    // Tap on flashcard re-speaks the word
+    flashcard.addEventListener('click', async () => {
+      if (isBusy || !currentWord) return;
+      await speakWord(currentWord);
+    });
+
+    /* ── Confetti ────────────────────────────────────────────── */
+    function launchConfetti(count = 60) {
+      const colors = ['#FF6B6B','#4ECDC4','#FFE66D','#9B7EF5','#C9B1FF','#40C87C'];
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.cssText = `
+          left: ${Math.random() * 100}vw;
+          top: -20px;
+          background: ${colors[Math.floor(Math.random() * colors.length)]};
+          animation-delay: ${Math.random() * 1}s;
+          animation-duration: ${1.8 + Math.random() * 1.4}s;
+          transform: rotate(${Math.random() * 360}deg);
+          border-radius: ${Math.random() > 0.5 ? '50%' : '3px'};
+        `;
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 3200);
+      }
+    }
+
+    /* ── Utility ─────────────────────────────────────────────── */
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /* ── Init ────────────────────────────────────────────────── */
+    function init() {
+      updateStats();
+      const first = pickNextWord();
+      showCard(first);
+    }
+
+    init();
+
+  })();
+  </script>
+</body>
+</html>
