@@ -169,6 +169,25 @@ export const THEMES = {
 
     praisePrefix: 'Let it go! ',
   },
+
+  starwars: {
+    id: 'starwars',
+    name: 'Star Wars',
+    icon: '🌟',
+    character: '🌟',
+    description: 'Use the Force!',
+
+    accentColor: '#0D1B2A',   // deep space black — Star Wars opening-crawl sky
+    accentDark:  '#060D14',
+    headerColor: '#0D1B2A',
+    glowColor:   '#FFE81F',   // iconic Star Wars crawl yellow — blazes against dark bubble
+
+    counterEmojis: ['⭐', '🚀', '🌙', '🛸', '💫', '⚔️', '🤖', '🪐', '🌟', '👾'],
+
+    cardGradient: 'linear-gradient(145deg, #1a3a5c, #0D1B2A)',
+
+    praisePrefix: 'Use the Force! ',
+  },
 };
 
 // ── Storage ──────────────────────────────────────────────────────────────────
