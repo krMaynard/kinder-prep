@@ -383,6 +383,130 @@
     .theme-bubble.active .theme-bubble-name {
       color: var(--theme-glow, #FF6B6B);
     }
+
+    /* ── Parent star-adjust panel ── */
+    .star-adjust-row {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .star-adjust-btn {
+      background: none;
+      border: none;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #7c9cbf;
+      cursor: pointer;
+      text-decoration: underline dotted;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: color 0.15s;
+    }
+
+    .star-adjust-btn:hover,
+    .star-adjust-btn:focus {
+      color: #3a6fa8;
+      outline: none;
+    }
+
+    .star-adjust-panel {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      margin-top: 12px;
+      padding: 16px 20px;
+      background: #fff;
+      border: 2px solid #e2e8f0;
+      border-radius: 20px;
+      max-width: 280px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    .star-adjust-panel.visible {
+      display: flex;
+    }
+
+    .star-adjust-stepper {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .star-step-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 3px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #3a3a5c;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: background 0.1s, transform 0.1s, border-color 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .star-step-btn:active {
+      background: #e2e8f0;
+      transform: scale(0.93);
+    }
+
+    .star-adjust-count {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.4rem;
+      color: #f5a623;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .star-adjust-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .star-reset-btn {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      background: #fff0f0;
+      color: #c0392b;
+      border: 2px solid #fca5a5;
+      border-radius: 50px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .star-reset-btn:hover {
+      background: #fee2e2;
+    }
+
+    .star-done-btn {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      background: #22c55e;
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .star-done-btn:hover {
+      background: #16a34a;
+    }
   </style>
 </head>
 <body>
@@ -467,8 +591,26 @@
     </div>
   </footer>
 
+  <!-- ── Parent star-adjust panel ── -->
+  <div class="star-adjust-row" id="star-adjust-row">
+    <button class="star-adjust-btn" id="star-adjust-btn" aria-expanded="false" aria-controls="star-adjust-panel">
+      ✏️ Adjust stars
+    </button>
+    <div class="star-adjust-panel" id="star-adjust-panel" role="region" aria-label="Adjust star count">
+      <div class="star-adjust-stepper">
+        <button class="star-step-btn" id="star-minus" aria-label="Remove one star">−</button>
+        <span class="star-adjust-count" id="star-adjust-count" aria-live="polite">0</span>
+        <button class="star-step-btn" id="star-plus" aria-label="Add one star">+</button>
+      </div>
+      <div class="star-adjust-actions">
+        <button class="star-reset-btn" id="star-reset-btn">Reset to 0</button>
+        <button class="star-done-btn" id="star-done-btn">Done ✓</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
-    import { getChildName, setChildName, getStars } from './_shared/progress.js';
+    import { getChildName, setChildName, getStars, setStars } from './_shared/progress.js';
     import { speakPhrase } from './_shared/audio.js';
     import { THEMES, getThemeId, setThemeId, getTheme, applyTheme } from './_shared/theme.js';
 
@@ -664,6 +806,87 @@
     }
 
     buildThemePicker();
+
+    /* ─── Parent star-adjust panel ─── */
+    const starAdjustBtn   = document.getElementById('star-adjust-btn');
+    const starAdjustPanel = document.getElementById('star-adjust-panel');
+    const starAdjustCount = document.getElementById('star-adjust-count');
+    const starMinusBtn    = document.getElementById('star-minus');
+    const starPlusBtn     = document.getElementById('star-plus');
+    const starResetBtn    = document.getElementById('star-reset-btn');
+    const starDoneBtn     = document.getElementById('star-done-btn');
+
+    let pendingStars = 0;
+
+    function updateAdjustDisplay() {
+      starAdjustCount.textContent = pendingStars;
+    }
+
+    function openAdjustPanel() {
+      pendingStars = getStars();
+      updateAdjustDisplay();
+      starAdjustPanel.classList.add('visible');
+      starAdjustBtn.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeAdjustPanel() {
+      starAdjustPanel.classList.remove('visible');
+      starAdjustBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    starAdjustBtn.addEventListener('click', () => {
+      starAdjustPanel.classList.contains('visible') ? closeAdjustPanel() : openAdjustPanel();
+    });
+
+    /** Attach hold-to-repeat to a button. fn() fires immediately, then repeats. */
+    function makeRepeatable(btn, fn) {
+      let timeoutId = null;
+      let intervalId = null;
+
+      const start = (e) => {
+        e.preventDefault();
+        fn();
+        timeoutId = setTimeout(() => {
+          intervalId = setInterval(fn, 80);
+        }, 420);
+      };
+
+      const stop = () => {
+        clearTimeout(timeoutId);
+        clearInterval(intervalId);
+        timeoutId = null;
+        intervalId = null;
+      };
+
+      btn.addEventListener('pointerdown', start);
+      btn.addEventListener('pointerup', stop);
+      btn.addEventListener('pointerleave', stop);
+      btn.addEventListener('pointercancel', stop);
+    }
+
+    makeRepeatable(starMinusBtn, () => {
+      if (pendingStars > 0) { pendingStars--; updateAdjustDisplay(); }
+    });
+
+    makeRepeatable(starPlusBtn, () => {
+      pendingStars++;
+      updateAdjustDisplay();
+    });
+
+    starResetBtn.addEventListener('click', () => {
+      pendingStars = 0;
+      updateAdjustDisplay();
+    });
+
+    starDoneBtn.addEventListener('click', () => {
+      setStars(pendingStars);
+      footerStarCount.textContent = pendingStars;
+      closeAdjustPanel();
+      // Re-render greeting so the inline star count updates too
+      let savedName = null;
+      try { savedName = localStorage.getItem('hpk_child_name'); } catch {}
+      if (savedName) renderGreeting(savedName, pendingStars);
+    });
   </script>
 </body>
 </html>

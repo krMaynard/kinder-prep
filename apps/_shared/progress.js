@@ -140,6 +140,16 @@ export function getStars() {
 }
 
 /**
+ * Set the star total to an exact value (parent adjustment).
+ * Clamps to ≥ 0 and rounds to nearest integer.
+ *
+ * @param {number} n - New star count.
+ */
+export function setStars(n) {
+  setItem('stars', Math.max(0, Math.round(n)));
+}
+
+/**
  * Remove stars (e.g. for spending). Will not go below zero.
  *
  * @param {number} n - Number of stars to remove.
