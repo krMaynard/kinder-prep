@@ -25,7 +25,8 @@ except ImportError:
     PIL_AVAILABLE = False
 
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types as genai_types
     GENAI_AVAILABLE = True
 except ImportError:
     GENAI_AVAILABLE = False
@@ -189,7 +190,7 @@ COMMON_SIGHT_WORDS = {
 }
 
 TEXT_MODEL = "gemini-3.1-pro-preview"
-IMAGE_MODEL = "gemini-2.5-flash-image-preview"  # Nano Banana — native image generation
+IMAGE_MODEL = "gemini-3.1-flash-image"  # Nano Banana 2 — native image generation
 
 # ---------------------------------------------------------------------------
 # Color scheme
@@ -302,12 +303,12 @@ def check_vocabulary(text: str, phonics_level: str, extra_sight_words: list[str]
 # Gemini API helpers
 # ---------------------------------------------------------------------------
 
-def init_genai(api_key: str) -> None:
+def init_genai(api_key: str) -> "genai.Client":
     if not GENAI_AVAILABLE:
         raise RuntimeError(
-            "google-generativeai is not installed. Run: pip install google-generativeai"
+            "google-genai is not installed. Run: pip install google-genai"
         )
-    genai.configure(api_key=api_key)
+    return genai.Client(api_key=api_key)
 
 
 def generate_story_text(
@@ -320,7 +321,7 @@ def generate_story_text(
     page_count: int,
 ) -> dict:
     """Call Gemini text model and return parsed story JSON."""
-    init_genai(api_key)
+    client = init_genai(api_key)
 
     sight_words_str = ", ".join(sight_words) if sight_words else "the, a, is, can, I, see, go"
 
@@ -350,9 +351,11 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
     last_error: Exception | None = None
     for attempt in range(2):
         try:
-            model = genai.GenerativeModel(TEXT_MODEL)
-            response = model.generate_content(prompt)
-            raw = response.text.strip()
+            response = client.models.generate_content(
+                model=TEXT_MODEL,
+                contents=prompt,
+            )
+            raw = (response.text or "").strip()
             # Strip markdown code fences if present
             raw = re.sub(r"^```[a-z]*\n?", "", raw)
             raw = re.sub(r"\n?```$", "", raw)
@@ -391,7 +394,7 @@ def generate_page_image(
     style_guide: str = _DEFAULT_STYLE_GUIDE,
 ) -> bytes:
     """Generate an image for a single page, return raw PNG bytes."""
-    init_genai(api_key)
+    client = init_genai(api_key)
 
     prompt = (
         f"Children's book illustration. {page_text} "
@@ -404,10 +407,12 @@ def generate_page_image(
     last_error: Exception | None = None
     for attempt in range(2):
         try:
-            model = genai.GenerativeModel(IMAGE_MODEL)
-            response = model.generate_content(
-                prompt,
-                generation_config={"response_modalities": ["IMAGE", "TEXT"]},
+            response = client.models.generate_content(
+                model=IMAGE_MODEL,
+                contents=prompt,
+                config=genai_types.GenerateContentConfig(
+                    response_modalities=["IMAGE", "TEXT"],
+                ),
             )
             for part in response.candidates[0].content.parts:
                 if part.inline_data and part.inline_data.mime_type.startswith("image/"):
@@ -1639,8 +1644,8 @@ def main() -> None:
         )
     if not GENAI_AVAILABLE:
         print(
-            "WARNING: google-generativeai is not installed.\n"
-            "Install with: pip install google-generativeai"
+            "WARNING: google-genai is not installed.\n"
+            "Install with: pip install google-genai"
         )
 
     app = StoryGeneratorApp()

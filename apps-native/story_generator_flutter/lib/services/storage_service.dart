@@ -13,9 +13,7 @@ class StorageService {
   static const _keyStyleGuide = 'style_guide';
   static const _keyUserTemplates = 'user_style_templates';
 
-  static const _secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  static const _secureStorage = FlutterSecureStorage();
 
   // ---------------------------------------------------------------------------
   // API key

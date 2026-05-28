@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/story.dart';
 
-const _textModel = 'gemini-2.5-flash';
-const _imageModel = 'gemini-2.5-flash-preview-image-generation';
+const _textModel = 'gemini-3.1-pro-preview';
+const _imageModel = 'gemini-3.1-flash-image';
+const _apiBase = 'https://generativelanguage.googleapis.com/v1beta';
 
 class GeminiService {
   // ---------------------------------------------------------------------------
@@ -22,8 +22,6 @@ class GeminiService {
     required List<String> sightWords,
     required int pageCount,
   }) async {
-    final model = GenerativeModel(model: _textModel, apiKey: apiKey);
-
     final sightWordsStr =
         sightWords.isNotEmpty ? sightWords.join(', ') : 'the, a, is, can, I, see, go';
 
@@ -49,18 +47,43 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
   ]
 }''';
 
+    final url = Uri.parse('$_apiBase/models/$_textModel:generateContent?key=$apiKey');
+
     Exception? lastError;
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
-        final response = await model.generateContent([Content.text(prompt)]);
-        var raw = response.text?.trim() ?? '';
-        // Strip markdown fences if present
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'contents': [
+              {
+                'parts': [
+                  {'text': prompt}
+                ]
+              }
+            ],
+          }),
+        );
+
+        if (response.statusCode != 200) {
+          throw Exception('Text API error ${response.statusCode}: ${response.body}');
+        }
+
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        final parts = (body['candidates'] as List<dynamic>)[0]['content']['parts']
+            as List<dynamic>;
+        final buffer = StringBuffer();
+        for (final part in parts) {
+          final text = (part as Map<String, dynamic>)['text'];
+          if (text is String) buffer.write(text);
+        }
+        var raw = buffer.toString().trim();
         raw = raw.replaceAll(RegExp(r'^```[a-z]*\n?', multiLine: true), '');
         raw = raw.replaceAll(RegExp(r'\n?```$', multiLine: true), '');
         return Story.fromJson(jsonDecode(raw) as Map<String, dynamic>);
       } on FormatException catch (e) {
         lastError = e;
-        // Retry once on JSON parse failure
       } catch (e) {
         lastError = e is Exception ? e : Exception(e.toString());
         if (attempt == 0) continue;
@@ -71,7 +94,7 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
   }
 
   // ---------------------------------------------------------------------------
-  // Page image generation (REST — response_modalities not yet in Dart SDK)
+  // Page image generation
   // ---------------------------------------------------------------------------
 
   Future<List<int>> generatePageImage({
@@ -89,9 +112,7 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
         'No text, no letters, no signs in the image. '
         'Page $pageNum of $pageCount.';
 
-    final url = Uri.parse(
-      'https://generativelanguage.googleapis.com/v1beta/models/$_imageModel:generateContent?key=$apiKey',
-    );
+    final url = Uri.parse('$_apiBase/models/$_imageModel:generateContent?key=$apiKey');
 
     Exception? lastError;
     for (var attempt = 0; attempt < 2; attempt++) {
@@ -118,7 +139,8 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
         }
 
         final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final parts = (body['candidates'] as List<dynamic>)[0]['content']['parts'] as List<dynamic>;
+        final parts = (body['candidates'] as List<dynamic>)[0]['content']['parts']
+            as List<dynamic>;
         for (final part in parts) {
           final inlineData = (part as Map<String, dynamic>)['inlineData'];
           if (inlineData != null) {

@@ -39,4 +39,4 @@ Before hardcoding any Gemini (or other LLM) model name, **always confirm the exa
 
 Current models in use (verify before changing):
 - Text generation: `gemini-3.1-pro-preview` (fallback: `gemini-3.5-flash`) — check [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models)
-- Image generation: `gemini-2.5-flash-image-preview` (Nano Banana) — check [ai.google.dev/gemini-api/docs/image-generation](https://ai.google.dev/gemini-api/docs/image-generation)
+- Image generation: `gemini-3.1-flash-image` (Nano Banana 2, stable) — check [ai.google.dev/gemini-api/docs/image-generation](https://ai.google.dev/gemini-api/docs/image-generation)
