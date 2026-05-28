@@ -1,4 +1,8 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../models/profile.dart';
@@ -83,6 +87,41 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _pickReferencePhoto(ImageSource source) async {
+    final picker = ImagePicker();
+    final XFile? picked = await picker.pickImage(
+      source: source,
+      maxWidth: 1024,
+      imageQuality: 85,
+    );
+    if (picked == null || !mounted) return;
+    final bytes = await picked.readAsBytes();
+    final mime = picked.mimeType ?? _guessMimeType(picked.name);
+    if (mime == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unsupported image type. Use PNG, JPEG, or WebP.')),
+      );
+      return;
+    }
+    if (!mounted) return;
+    context.read<AppState>().setReferencePhoto(
+          bytes: bytes,
+          mimeType: mime,
+          name: picked.name,
+        );
+  }
+
+  String? _guessMimeType(String filename) {
+    final lower = filename.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.heic')) return 'image/heic';
+    if (lower.endsWith('.heif')) return 'image/heif';
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -105,6 +144,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 _field('Child\'s name', _childNameCtrl),
                 _field('Favorite characters', _favCharCtrl),
                 const SizedBox(height: 8),
+                Text('Main character', style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: 4),
+                DropdownButtonFormField<String>(
+                  value: kGenders.contains(state.profile.gender)
+                      ? state.profile.gender
+                      : kGenders.first,
+                  items: kGenders
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      state.profile = state.profile.copyWith(gender: v);
+                    }
+                  },
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                Text('Reference photo (optional)',
+                    style: Theme.of(context).textTheme.labelLarge),
+                const SizedBox(height: 4),
+                _ReferencePhotoControls(
+                  bytes: state.referencePhotoBytes,
+                  name: state.referencePhotoName,
+                  onPickGallery: () => _pickReferencePhoto(ImageSource.gallery),
+                  onPickCamera: () => _pickReferencePhoto(ImageSource.camera),
+                  onClear: () => state.clearReferencePhoto(),
+                ),
+                const SizedBox(height: 12),
                 Text('Phonics level', style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: 4),
                 DropdownButtonFormField<String>(
@@ -339,6 +406,87 @@ class _StyleGuideCard extends StatelessWidget {
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Reference photo picker (camera / gallery + thumbnail preview)
+// ---------------------------------------------------------------------------
+
+class _ReferencePhotoControls extends StatelessWidget {
+  final List<int>? bytes;
+  final String? name;
+  final VoidCallback onPickGallery;
+  final VoidCallback onPickCamera;
+  final VoidCallback onClear;
+
+  const _ReferencePhotoControls({
+    required this.bytes,
+    required this.name,
+    required this.onPickGallery,
+    required this.onPickCamera,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPhoto = bytes != null && bytes!.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton.icon(
+              onPressed: onPickGallery,
+              icon: const Icon(Icons.photo_library_outlined),
+              label: const Text('Choose from gallery'),
+            ),
+            if (Platform.isAndroid || Platform.isIOS)
+              OutlinedButton.icon(
+                onPressed: onPickCamera,
+                icon: const Icon(Icons.photo_camera_outlined),
+                label: const Text('Take photo'),
+              ),
+            if (hasPhoto)
+              TextButton.icon(
+                onPressed: onClear,
+                icon: const Icon(Icons.close),
+                label: const Text('Clear'),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (hasPhoto)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.memory(
+                  Uint8List.fromList(bytes!),
+                  width: 96,
+                  height: 96,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  name ?? 'Selected photo',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ],
+          )
+        else
+          Text(
+            'No photo selected — the illustrator will draw the child from imagination.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
       ],
     );
   }
