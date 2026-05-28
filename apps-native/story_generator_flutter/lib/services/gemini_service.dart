@@ -82,8 +82,10 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
         }
         final buffer = StringBuffer();
         for (final part in parts) {
-          final text = (part as Map<String, dynamic>)['text'];
-          if (text is String) buffer.write(text);
+          if (part is Map<String, dynamic>) {
+            final text = part['text'];
+            if (text is String) buffer.write(text);
+          }
         }
         var raw = buffer.toString().trim();
         raw = raw.replaceAll(RegExp(r'^```[a-z]*\n?', multiLine: true), '');
@@ -156,11 +158,13 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
           throw Exception('No content parts in Gemini response: ${response.body}');
         }
         for (final part in parts) {
-          final inlineData = (part as Map<String, dynamic>)['inlineData'];
-          if (inlineData != null) {
-            final mimeType = inlineData['mimeType'] as String;
-            if (mimeType.startsWith('image/')) {
-              return base64Decode(inlineData['data'] as String);
+          if (part is! Map<String, dynamic>) continue;
+          final inlineData = part['inlineData'];
+          if (inlineData is Map<String, dynamic>) {
+            final mimeType = inlineData['mimeType'];
+            final data = inlineData['data'];
+            if (mimeType is String && mimeType.startsWith('image/') && data is String) {
+              return base64Decode(data);
             }
           }
         }

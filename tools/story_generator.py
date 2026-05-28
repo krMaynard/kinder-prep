@@ -355,6 +355,8 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
                 model=TEXT_MODEL,
                 contents=prompt,
             )
+            if not response.candidates or not response.candidates[0].content:
+                raise RuntimeError("No candidates or content returned in response")
             raw = (response.text or "").strip()
             # Strip markdown code fences if present
             raw = re.sub(r"^```[a-z]*\n?", "", raw)
@@ -414,6 +416,12 @@ def generate_page_image(
                     response_modalities=["IMAGE", "TEXT"],
                 ),
             )
+            if (
+                not response.candidates
+                or not response.candidates[0].content
+                or not response.candidates[0].content.parts
+            ):
+                raise RuntimeError("No content parts returned in response")
             for part in response.candidates[0].content.parts:
                 if part.inline_data and part.inline_data.mime_type.startswith("image/"):
                     return part.inline_data.data
