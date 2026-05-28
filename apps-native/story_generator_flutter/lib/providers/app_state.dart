@@ -27,7 +27,7 @@ class AppState extends ChangeNotifier {
   int pageCount = 6;
 
   // Reference photo of the main character (transient — not persisted)
-  List<int>? referencePhotoBytes;
+  Uint8List? referencePhotoBytes;
   String? referencePhotoMimeType;
   String? referencePhotoName;
 
@@ -101,7 +101,7 @@ class AppState extends ChangeNotifier {
   }
 
   void setReferencePhoto({
-    required List<int> bytes,
+    required Uint8List bytes,
     required String mimeType,
     required String name,
   }) {

@@ -151,8 +151,8 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
     if (hasPhoto) {
       prompt = 'The attached photo shows the real child. Use it as a reference for '
           "$childName's face, hair, and skin tone, but always render the child "
-          'in the chosen illustration style — do not copy the photo directly. ' +
-          prompt;
+          'in the chosen illustration style — do not copy the photo directly. '
+          '$prompt';
     }
 
     final List<Map<String, dynamic>> parts = [
@@ -195,11 +195,11 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
           throw Exception('No candidates in Gemini response: ${response.body}');
         }
         final content = candidates[0]['content'] as Map<String, dynamic>?;
-        final parts = content?['parts'] as List<dynamic>?;
-        if (parts == null) {
+        final responseParts = content?['parts'] as List<dynamic>?;
+        if (responseParts == null) {
           throw Exception('No content parts in Gemini response: ${response.body}');
         }
-        for (final part in parts) {
+        for (final part in responseParts) {
           if (part is! Map<String, dynamic>) continue;
           final inlineData = part['inlineData'];
           if (inlineData is Map<String, dynamic>) {

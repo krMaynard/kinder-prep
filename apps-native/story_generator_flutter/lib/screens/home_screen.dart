@@ -416,7 +416,7 @@ class _StyleGuideCard extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _ReferencePhotoControls extends StatelessWidget {
-  final List<int>? bytes;
+  final Uint8List? bytes;
   final String? name;
   final VoidCallback onPickGallery;
   final VoidCallback onPickCamera;
@@ -467,7 +467,7 @@ class _ReferencePhotoControls extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.memory(
-                  Uint8List.fromList(bytes!),
+                  bytes!,
                   width: 96,
                   height: 96,
                   fit: BoxFit.cover,

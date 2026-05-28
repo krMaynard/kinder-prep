@@ -447,16 +447,14 @@ def generate_page_image(
         f"{text_instruction} "
         f"Page {page_num} of {page_count}."
     )
-    if reference_photo_bytes:
-        prompt = (
+    contents: list = [prompt]
+    if reference_photo_bytes and reference_photo_mime:
+        contents[0] = (
             "The attached photo shows the real child. Use it as a reference for "
             f"{child_name}'s face, hair, and skin tone, but always render the child "
             "in the chosen illustration style — do not copy the photo directly. "
             + prompt
         )
-
-    contents: list = [prompt]
-    if reference_photo_bytes and reference_photo_mime:
         contents.append(
             genai_types.Part.from_bytes(
                 data=reference_photo_bytes,
