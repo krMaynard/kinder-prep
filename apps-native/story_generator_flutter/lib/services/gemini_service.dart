@@ -71,8 +71,15 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
         }
 
         final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final parts = (body['candidates'] as List<dynamic>)[0]['content']['parts']
-            as List<dynamic>;
+        final candidates = body['candidates'] as List<dynamic>?;
+        if (candidates == null || candidates.isEmpty) {
+          throw Exception('No candidates in Gemini response: ${response.body}');
+        }
+        final content = candidates[0]['content'] as Map<String, dynamic>?;
+        final parts = content?['parts'] as List<dynamic>?;
+        if (parts == null) {
+          throw Exception('No content parts in Gemini response: ${response.body}');
+        }
         final buffer = StringBuffer();
         for (final part in parts) {
           final text = (part as Map<String, dynamic>)['text'];
@@ -139,8 +146,15 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
         }
 
         final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final parts = (body['candidates'] as List<dynamic>)[0]['content']['parts']
-            as List<dynamic>;
+        final candidates = body['candidates'] as List<dynamic>?;
+        if (candidates == null || candidates.isEmpty) {
+          throw Exception('No candidates in Gemini response: ${response.body}');
+        }
+        final content = candidates[0]['content'] as Map<String, dynamic>?;
+        final parts = content?['parts'] as List<dynamic>?;
+        if (parts == null) {
+          throw Exception('No content parts in Gemini response: ${response.body}');
+        }
         for (final part in parts) {
           final inlineData = (part as Map<String, dynamic>)['inlineData'];
           if (inlineData != null) {
