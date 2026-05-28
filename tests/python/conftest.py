@@ -20,7 +20,7 @@ for _mod in ['PIL', 'PIL.Image', 'PIL.ImageTk']:
     if _mod not in sys.modules:
         sys.modules[_mod] = MagicMock()
 
-# google.generativeai is also guarded, but mock for safety.
-for _mod in ['google', 'google.generativeai']:
+# google.genai is also guarded, but mock for safety.
+for _mod in ['google', 'google.genai', 'google.genai.types']:
     if _mod not in sys.modules:
         sys.modules[_mod] = MagicMock()

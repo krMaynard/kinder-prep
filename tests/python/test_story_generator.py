@@ -1,6 +1,6 @@
 """
 Tests for pure utility functions in tools/story_generator.py.
-tkinter and google.generativeai are mocked via conftest.py.
+tkinter and google.genai are mocked via conftest.py.
 """
 import ast
 import json
