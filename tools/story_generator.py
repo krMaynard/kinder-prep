@@ -974,7 +974,8 @@ class StoryGeneratorApp(tk.Tk):
         self._save_config()
 
     def _get_text_mode(self) -> str:
-        return getattr(self, "_text_mode_var", None) and self._text_mode_var.get() or "composite"
+        var = getattr(self, "_text_mode_var", None)
+        return var.get() if var is not None else "composite"
 
     def _save_style_guide(self) -> None:
         guide = self._style_guide_text.get("1.0", tk.END).strip()
