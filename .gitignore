@@ -2,6 +2,9 @@
 __pycache__/
 node_modules/
 
+# macOS
+.DS_Store
+
 # Python venv (created by scripts/setup-python.sh)
 tools/.venv/
 
