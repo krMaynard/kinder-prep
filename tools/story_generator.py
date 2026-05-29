@@ -394,15 +394,24 @@ def generate_page_image(
     page_num: int,
     page_count: int,
     style_guide: str = _DEFAULT_STYLE_GUIDE,
+    text_in_image: bool = False,
 ) -> bytes:
     """Generate an image for a single page, return raw PNG bytes."""
     client = init_genai(api_key)
+
+    if text_in_image:
+        text_instruction = (
+            f"At the bottom of the illustration, clearly render this sentence in large, "
+            f"rounded, child-friendly lettering exactly as written: \"{page_text}\""
+        )
+    else:
+        text_instruction = "No text, no letters, no signs in the image."
 
     prompt = (
         f"Children's book illustration. {page_text} "
         f"Characters: {child_name} (a friendly 4-year-old child) and {favorite_character}. "
         f"Style: {style_guide} "
-        f"No text, no letters, no signs in the image. "
+        f"{text_instruction} "
         f"Page {page_num} of {page_count}."
     )
 
@@ -935,6 +944,38 @@ class StoryGeneratorApp(tk.Tk):
             command=self._delete_style_template,
             style="Small.TButton",
         ).pack(side=tk.LEFT)
+
+        # ---- Page Text section ----
+        text_lf = ttk.LabelFrame(sidebar_scroll.inner, text="Page Text", padding=8)
+        text_lf.pack(fill=tk.X, **pad)
+
+        self._text_mode_var = tk.StringVar(value=self._config.get("text_mode", "composite"))
+
+        ttk.Radiobutton(
+            text_lf,
+            text="Pillow band  (reliable, always exact)",
+            variable=self._text_mode_var,
+            value="composite",
+        ).pack(anchor=tk.W)
+        ttk.Radiobutton(
+            text_lf,
+            text="AI in-image  (experimental — may mis-spell)",
+            variable=self._text_mode_var,
+            value="in_image",
+        ).pack(anchor=tk.W)
+
+        self._text_mode_var.trace_add(
+            "write",
+            lambda *_: self._on_text_mode_changed(),
+        )
+
+    def _on_text_mode_changed(self) -> None:
+        self._config["text_mode"] = self._text_mode_var.get()
+        self._save_config()
+
+    def _get_text_mode(self) -> str:
+        var = getattr(self, "_text_mode_var", None)
+        return var.get() if var is not None else "composite"
 
     def _save_style_guide(self) -> None:
         guide = self._style_guide_text.get("1.0", tk.END).strip()
@@ -1552,6 +1593,7 @@ class StoryGeneratorApp(tk.Tk):
         child_name = self._child_name_var.get().strip() or "the child"
         favorite_character = self._story_char_var.get().strip() or "a friendly animal"
         style_guide = self._get_style_guide()
+        text_mode = self._get_text_mode()          # snapshot on main thread
         pages = list(self._story_data.get("pages", []))  # snapshot before dispatch
         page_count = len(pages)
 
@@ -1574,8 +1616,11 @@ class StoryGeneratorApp(tk.Tk):
                         page_num=page_num,
                         page_count=page_count,
                         style_guide=style_guide,
+                        text_in_image=(text_mode == "in_image"),
                     )
-                    self._page_images[page_num] = composite_text_onto_image(img_bytes, text)
+                    if text_mode == "composite":
+                        img_bytes = composite_text_onto_image(img_bytes, text)
+                    self._page_images[page_num] = img_bytes
                     self.after(0, lambda n=page_num: self._update_page_thumbnail(n))
                 except Exception as exc:
                     errors.append(f"Page {page_num}: {exc}")
@@ -1615,6 +1660,7 @@ class StoryGeneratorApp(tk.Tk):
         child_name = self._child_name_var.get().strip() or "the child"
         favorite_character = self._story_char_var.get().strip() or "a friendly animal"
         style_guide = self._get_style_guide()
+        text_mode = self._get_text_mode()          # snapshot on main thread
         page_count = len(self._story_data.get("pages", [])) if self._story_data else 1
 
         self._set_generating(True)
@@ -1630,8 +1676,11 @@ class StoryGeneratorApp(tk.Tk):
                     page_num=page_num,
                     page_count=page_count,
                     style_guide=style_guide,
+                    text_in_image=(text_mode == "in_image"),
                 )
-                self._page_images[page_num] = composite_text_onto_image(img_bytes, text)
+                if text_mode == "composite":
+                    img_bytes = composite_text_onto_image(img_bytes, text)
+                self._page_images[page_num] = img_bytes
                 self.after(0, lambda: self._set_page_thumbnail(img_label, page_num))
                 self.after(0, lambda: self._set_status(f"Page {page_num} image updated."))
                 self.after(0, lambda: self._set_generating(False))
