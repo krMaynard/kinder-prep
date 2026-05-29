@@ -19,7 +19,7 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 from typing import Optional
 
 try:
-    from PIL import Image, ImageTk
+    from PIL import Image, ImageDraw, ImageFont, ImageTk
     PIL_AVAILABLE = True
 except ImportError:
     PIL_AVAILABLE = False
@@ -433,6 +433,115 @@ def generate_page_image(
             break
 
     raise RuntimeError(f"Image generation failed for page {page_num}: {last_error}")
+
+
+# ---------------------------------------------------------------------------
+# Image compositing — text imprinted on page like a real book
+# ---------------------------------------------------------------------------
+
+def _find_font(size: int) -> "ImageFont.FreeTypeFont":
+    candidates = [
+        # macOS
+        "/Library/Fonts/Georgia.ttf",
+        "/System/Library/Fonts/Supplemental/Georgia.ttf",
+        "/System/Library/Fonts/Supplemental/Arial.ttf",
+        # Linux
+        "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSerif.ttf",
+        # Windows
+        "C:/Windows/Fonts/georgia.ttf",
+        "C:/Windows/Fonts/times.ttf",
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size)
+            except (OSError, IOError):
+                continue
+    # Pillow 10.1+ accepts a size argument; fall back for older versions
+    try:
+        return ImageFont.load_default(size=size)
+    except TypeError:
+        return ImageFont.load_default()
+
+
+def _wrap_text(
+    text: str,
+    font: "ImageFont.FreeTypeFont",
+    draw: "ImageDraw.ImageDraw",
+    max_width: int,
+) -> list[str]:
+    words = text.split()
+    lines: list[str] = []
+    current: list[str] = []
+    for word in words:
+        candidate = " ".join(current + [word])
+        bbox = draw.textbbox((0, 0), candidate, font=font)
+        if bbox[2] - bbox[0] <= max_width:
+            current.append(word)
+        else:
+            if current:
+                lines.append(" ".join(current))
+            current = [word]
+    if current:
+        lines.append(" ".join(current))
+    return lines or [text]
+
+
+def composite_text_onto_image(raw_bytes: bytes, page_text: str) -> bytes:
+    """Return PNG bytes with page_text set in a warm cream band below the illustration.
+
+    If PIL is unavailable or compositing fails, returns raw_bytes unchanged so
+    the generation pipeline is never broken by a compositing error.
+    """
+    if not PIL_AVAILABLE or not page_text.strip():
+        return raw_bytes
+    try:
+        img = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
+        W, H = img.size
+
+        # Normalise to 1024 px wide so font sizes stay consistent
+        TARGET_W = 1024
+        if W != TARGET_W:
+            img = img.resize((TARGET_W, round(H * TARGET_W / W)), Image.LANCZOS)
+            W, H = img.size
+
+        FONT_SIZE = max(36, W // 20)       # ~51 px at 1024 wide — large, readable
+        PAD = round(W * 0.035)             # ~36 px horizontal/vertical padding
+        TEXT_COLOR = (44, 44, 44)          # near-black
+        BAND_COLOR = (255, 250, 240)       # warm cream — matches watercolor style
+        RULE_COLOR = (210, 200, 185)       # muted warm rule between image and text
+
+        font = _find_font(FONT_SIZE)
+
+        # Measure line height from font metrics before building the real canvas
+        dummy_draw = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+        sample_bbox = dummy_draw.textbbox((0, 0), "Ag", font=font)
+        line_h = (sample_bbox[3] - sample_bbox[1]) + round(FONT_SIZE * 0.35)
+
+        lines = _wrap_text(page_text, font, dummy_draw, W - PAD * 2)
+        band_h = len(lines) * line_h + PAD * 2
+
+        # Build canvas: illustration on top, cream text band below
+        canvas = Image.new("RGB", (W, H + band_h), BAND_COLOR)
+        canvas.paste(img, (0, 0))
+
+        draw = ImageDraw.Draw(canvas)
+        draw.line([(0, H), (W, H)], fill=RULE_COLOR, width=2)
+
+        y = H + PAD
+        for line in lines:
+            bbox = draw.textbbox((0, 0), line, font=font)
+            x = (W - (bbox[2] - bbox[0])) // 2
+            draw.text((x, y), line, fill=TEXT_COLOR, font=font)
+            y += line_h
+
+        out = io.BytesIO()
+        canvas.save(out, format="PNG")
+        return out.getvalue()
+    except Exception:
+        return raw_bytes
 
 
 # ---------------------------------------------------------------------------
@@ -1466,7 +1575,7 @@ class StoryGeneratorApp(tk.Tk):
                         page_count=page_count,
                         style_guide=style_guide,
                     )
-                    self._page_images[page_num] = img_bytes
+                    self._page_images[page_num] = composite_text_onto_image(img_bytes, text)
                     self.after(0, lambda n=page_num: self._update_page_thumbnail(n))
                 except Exception as exc:
                     errors.append(f"Page {page_num}: {exc}")
@@ -1522,7 +1631,7 @@ class StoryGeneratorApp(tk.Tk):
                     page_count=page_count,
                     style_guide=style_guide,
                 )
-                self._page_images[page_num] = img_bytes
+                self._page_images[page_num] = composite_text_onto_image(img_bytes, text)
                 self.after(0, lambda: self._set_page_thumbnail(img_label, page_num))
                 self.after(0, lambda: self._set_status(f"Page {page_num} image updated."))
                 self.after(0, lambda: self._set_generating(False))
