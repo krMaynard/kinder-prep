@@ -8,6 +8,18 @@ const _textModel = 'gemini-3.1-pro-preview';
 const _imageModel = 'gemini-3.1-flash-image';
 const _apiBase = 'https://generativelanguage.googleapis.com/v1beta';
 
+const Map<String, Map<String, String>> _genderPronouns = {
+  'girl': {'subject': 'she', 'object': 'her', 'possessive': 'her'},
+  'boy': {'subject': 'he', 'object': 'him', 'possessive': 'his'},
+  'child': {'subject': 'they', 'object': 'them', 'possessive': 'their'},
+};
+
+const Map<String, String> _genderDescriptors = {
+  'girl': 'a 4-year-old girl',
+  'boy': 'a 4-year-old boy',
+  'child': 'a 4-year-old child',
+};
+
 class GeminiService {
   // ---------------------------------------------------------------------------
   // Story text generation
@@ -21,14 +33,18 @@ class GeminiService {
     required String phonicsLevel,
     required List<String> sightWords,
     required int pageCount,
+    String gender = 'child',
   }) async {
     final sightWordsStr =
         sightWords.isNotEmpty ? sightWords.join(', ') : 'the, a, is, can, I, see, go';
+    final pronouns = _genderPronouns[gender] ?? _genderPronouns['child']!;
+    final descriptor = _genderDescriptors[gender] ?? _genderDescriptors['child']!;
 
     final prompt = '''You are writing a decodable book for a 4-year-old learning to read.
 
-Child: $childName
+Child: $childName ($descriptor)
 Hero of the story: $childName and $favoriteCharacter
+Pronouns for $childName: ${pronouns['subject']}/${pronouns['object']}/${pronouns['possessive']} — use these consistently.
 Theme: $theme
 Pages: $pageCount (one sentence per page, 6-8 words max per sentence)
 
@@ -114,12 +130,42 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
     required int pageNum,
     required int pageCount,
     required String styleGuide,
+    String gender = 'child',
+    List<int>? referencePhotoBytes,
+    String? referencePhotoMimeType,
   }) async {
-    final prompt = 'Children\'s book illustration. $pageText '
-        'Characters: $childName (a friendly 4-year-old child) and $favoriteCharacter. '
+    final descriptor =
+        (_genderDescriptors[gender] ?? _genderDescriptors['child']!).replaceFirst('a ', 'a friendly ');
+
+    var prompt = 'Children\'s book illustration. $pageText '
+        'Characters: $childName ($descriptor) and $favoriteCharacter. '
         'Style: $styleGuide '
         'No text, no letters, no signs in the image. '
         'Page $pageNum of $pageCount.';
+
+    final hasPhoto = referencePhotoBytes != null &&
+        referencePhotoBytes.isNotEmpty &&
+        referencePhotoMimeType != null &&
+        referencePhotoMimeType.isNotEmpty;
+
+    if (hasPhoto) {
+      prompt = 'The attached photo shows the real child. Use it as a reference for '
+          "$childName's face, hair, and skin tone, but always render the child "
+          'in the chosen illustration style — do not copy the photo directly. '
+          '$prompt';
+    }
+
+    final List<Map<String, dynamic>> parts = [
+      {'text': prompt},
+    ];
+    if (hasPhoto) {
+      parts.add({
+        'inlineData': {
+          'mimeType': referencePhotoMimeType,
+          'data': base64Encode(referencePhotoBytes),
+        }
+      });
+    }
 
     final url = Uri.parse('$_apiBase/models/$_imageModel:generateContent?key=$apiKey');
 
@@ -131,11 +177,7 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'contents': [
-              {
-                'parts': [
-                  {'text': prompt}
-                ]
-              }
+              {'parts': parts}
             ],
             'generationConfig': {
               'responseModalities': ['IMAGE', 'TEXT'],
@@ -153,11 +195,11 @@ Output format — return ONLY valid JSON, no markdown, no code fences:
           throw Exception('No candidates in Gemini response: ${response.body}');
         }
         final content = candidates[0]['content'] as Map<String, dynamic>?;
-        final parts = content?['parts'] as List<dynamic>?;
-        if (parts == null) {
+        final responseParts = content?['parts'] as List<dynamic>?;
+        if (responseParts == null) {
           throw Exception('No content parts in Gemini response: ${response.body}');
         }
-        for (final part in parts) {
+        for (final part in responseParts) {
           if (part is! Map<String, dynamic>) continue;
           final inlineData = part['inlineData'];
           if (inlineData is Map<String, dynamic>) {

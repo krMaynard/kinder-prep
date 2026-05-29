@@ -26,6 +26,11 @@ class AppState extends ChangeNotifier {
   String sightWordsRaw = '';
   int pageCount = 6;
 
+  // Reference photo of the main character (transient — not persisted)
+  Uint8List? referencePhotoBytes;
+  String? referencePhotoMimeType;
+  String? referencePhotoName;
+
   // Generated content
   Story? story;
   Map<int, List<int>> pageImages = {}; // page number → PNG bytes
@@ -95,6 +100,24 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setReferencePhoto({
+    required Uint8List bytes,
+    required String mimeType,
+    required String name,
+  }) {
+    referencePhotoBytes = bytes;
+    referencePhotoMimeType = mimeType;
+    referencePhotoName = name;
+    notifyListeners();
+  }
+
+  void clearReferencePhoto() {
+    referencePhotoBytes = null;
+    referencePhotoMimeType = null;
+    referencePhotoName = null;
+    notifyListeners();
+  }
+
   // ---------------------------------------------------------------------------
   // Story generation
   // ---------------------------------------------------------------------------
@@ -140,6 +163,7 @@ class AppState extends ChangeNotifier {
         phonicsLevel: profile.phonicsLevel,
         sightWords: sightList,
         pageCount: pageCount,
+        gender: profile.gender,
       );
 
       // Run vocabulary check on each page
@@ -189,6 +213,9 @@ class AppState extends ChangeNotifier {
           pageNum: page.page,
           pageCount: pages.length,
           styleGuide: styleGuide,
+          gender: profile.gender,
+          referencePhotoBytes: referencePhotoBytes,
+          referencePhotoMimeType: referencePhotoMimeType,
         );
         pageImages[page.page] = bytes;
         notifyListeners();
@@ -220,6 +247,9 @@ class AppState extends ChangeNotifier {
         pageNum: pageNum,
         pageCount: story?.pages.length ?? 1,
         styleGuide: styleGuide,
+        gender: profile.gender,
+        referencePhotoBytes: referencePhotoBytes,
+        referencePhotoMimeType: referencePhotoMimeType,
       );
       pageImages[pageNum] = bytes;
       statusMessage = 'Page $pageNum image updated.';

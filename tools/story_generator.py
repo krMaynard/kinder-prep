@@ -81,6 +81,22 @@ PHONICS_LEVELS = [
     "Digraphs",
 ]
 
+GENDERS = ["girl", "boy", "child"]
+GENDER_PRONOUNS: dict[str, dict[str, str]] = {
+    "girl": {"subject": "she", "object": "her", "possessive": "her"},
+    "boy": {"subject": "he", "object": "him", "possessive": "his"},
+    "child": {"subject": "they", "object": "them", "possessive": "their"},
+}
+
+REFERENCE_PHOTO_MIME_BY_EXT: dict[str, str] = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".heic": "image/heic",
+    ".heif": "image/heif",
+}
+
 # Words decodable at each phonics level (simplified reference sets)
 PHONICS_WORD_SETS: dict[str, set[str]] = {
     "CVC short-a": {
@@ -319,16 +335,24 @@ def generate_story_text(
     phonics_level: str,
     sight_words: list[str],
     page_count: int,
+    gender: str = "child",
 ) -> dict:
     """Call Gemini text model and return parsed story JSON."""
     client = init_genai(api_key)
 
     sight_words_str = ", ".join(sight_words) if sight_words else "the, a, is, can, I, see, go"
+    pronouns = GENDER_PRONOUNS.get(gender, GENDER_PRONOUNS["child"])
+    hero_descriptor = {
+        "girl": "a 4-year-old girl",
+        "boy": "a 4-year-old boy",
+        "child": "a 4-year-old child",
+    }.get(gender, "a 4-year-old child")
 
     prompt = f"""You are writing a decodable book for a 4-year-old learning to read.
 
-Child: {child_name}
+Child: {child_name} ({hero_descriptor})
 Hero of the story: {child_name} and {favorite_character}
+Pronouns for {child_name}: {pronouns['subject']}/{pronouns['object']}/{pronouns['possessive']} — use these consistently.
 Theme: {theme}
 Pages: {page_count} (one sentence per page, 6-8 words max per sentence)
 
@@ -395,9 +419,18 @@ def generate_page_image(
     page_count: int,
     style_guide: str = _DEFAULT_STYLE_GUIDE,
     text_in_image: bool = False,
+    gender: str = "child",
+    reference_photo_bytes: Optional[bytes] = None,
+    reference_photo_mime: Optional[str] = None,
 ) -> bytes:
     """Generate an image for a single page, return raw PNG bytes."""
     client = init_genai(api_key)
+
+    hero_descriptor = {
+        "girl": "a friendly 4-year-old girl",
+        "boy": "a friendly 4-year-old boy",
+        "child": "a friendly 4-year-old child",
+    }.get(gender, "a friendly 4-year-old child")
 
     if text_in_image:
         text_instruction = (
@@ -409,18 +442,32 @@ def generate_page_image(
 
     prompt = (
         f"Children's book illustration. {page_text} "
-        f"Characters: {child_name} (a friendly 4-year-old child) and {favorite_character}. "
+        f"Characters: {child_name} ({hero_descriptor}) and {favorite_character}. "
         f"Style: {style_guide} "
         f"{text_instruction} "
         f"Page {page_num} of {page_count}."
     )
+    contents: list = [prompt]
+    if reference_photo_bytes and reference_photo_mime:
+        contents[0] = (
+            "The attached photo shows the real child. Use it as a reference for "
+            f"{child_name}'s face, hair, and skin tone, but always render the child "
+            "in the chosen illustration style — do not copy the photo directly. "
+            + prompt
+        )
+        contents.append(
+            genai_types.Part.from_bytes(
+                data=reference_photo_bytes,
+                mime_type=reference_photo_mime,
+            )
+        )
 
     last_error: Exception | None = None
     for attempt in range(2):
         try:
             response = client.models.generate_content(
                 model=IMAGE_MODEL,
-                contents=prompt,
+                contents=contents,
                 config=genai_types.GenerateContentConfig(
                     response_modalities=["IMAGE", "TEXT"],
                 ),
@@ -653,6 +700,8 @@ class StoryGeneratorApp(tk.Tk):
         self._photo_refs: list[ImageTk.PhotoImage] = []  # keep refs alive
         self._generating = False
         self._last_spec_path: Optional[str] = None
+        self._reference_photo_path: Optional[str] = None  # path to user-supplied photo
+        self._reference_photo_thumb: Optional[ImageTk.PhotoImage] = None
 
         self._load_config()
         self._setup_styles()
@@ -797,6 +846,47 @@ class StoryGeneratorApp(tk.Tk):
         ttk.Label(pf, text="Favorite characters", style="Sidebar.TLabel").pack(anchor=tk.W)
         self._fav_chars_var = tk.StringVar()
         ttk.Entry(pf, textvariable=self._fav_chars_var).pack(fill=tk.X, pady=(0, 4))
+
+        ttk.Label(pf, text="Main character", style="Sidebar.TLabel").pack(anchor=tk.W)
+        self._gender_var = tk.StringVar(value=GENDERS[0])
+        ttk.OptionMenu(pf, self._gender_var, GENDERS[0], *GENDERS).pack(
+            fill=tk.X, pady=(0, 4)
+        )
+
+        ttk.Label(pf, text="Reference photo (optional)", style="Sidebar.TLabel").pack(
+            anchor=tk.W
+        )
+        photo_row = ttk.Frame(pf, style="Sidebar.TFrame")
+        photo_row.pack(fill=tk.X, pady=(0, 4))
+        ttk.Button(
+            photo_row,
+            text="Choose…",
+            command=self._choose_reference_photo,
+            style="Small.TButton",
+        ).pack(side=tk.LEFT)
+        ttk.Button(
+            photo_row,
+            text="Clear",
+            command=self._clear_reference_photo,
+            style="Small.TButton",
+        ).pack(side=tk.LEFT, padx=(4, 0))
+
+        self._photo_status_label = ttk.Label(
+            pf,
+            text="No photo selected",
+            style="Sidebar.TLabel",
+            foreground=COLORS["text_muted"],
+            wraplength=240,
+            justify=tk.LEFT,
+        )
+        self._photo_status_label.pack(anchor=tk.W, pady=(0, 4))
+
+        self._photo_thumb_label = tk.Label(
+            pf,
+            bg=COLORS["sidebar_bg"],
+            borderwidth=0,
+        )
+        self._photo_thumb_label.pack(anchor=tk.W, pady=(0, 4))
 
         ttk.Label(pf, text="Phonics level", style="Sidebar.TLabel").pack(anchor=tk.W)
         self._phonics_var = tk.StringVar(value=PHONICS_LEVELS[0])
@@ -977,6 +1067,72 @@ class StoryGeneratorApp(tk.Tk):
         var = getattr(self, "_text_mode_var", None)
         return var.get() if var is not None else "composite"
 
+    # ------------------------------------------------------------------
+    # Reference photo handling
+    # ------------------------------------------------------------------
+
+    def _choose_reference_photo(self) -> None:
+        path = filedialog.askopenfilename(
+            title="Choose a reference photo of the main character",
+            filetypes=[
+                ("Images", "*.png *.jpg *.jpeg *.webp *.heic *.heif"),
+                ("All files", "*.*"),
+            ],
+        )
+        if not path:
+            return
+        ext = pathlib.Path(path).suffix.lower()
+        if ext not in REFERENCE_PHOTO_MIME_BY_EXT:
+            messagebox.showwarning(
+                "Unsupported Image",
+                f"Unsupported image type '{ext}'. Use PNG, JPEG, WebP, or HEIC.",
+            )
+            return
+        self._reference_photo_path = path
+        self._refresh_photo_widgets()
+        self._set_status(f"Reference photo: {pathlib.Path(path).name}")
+
+    def _clear_reference_photo(self) -> None:
+        self._reference_photo_path = None
+        self._refresh_photo_widgets()
+        self._set_status("Reference photo cleared.")
+
+    def _refresh_photo_widgets(self) -> None:
+        path = self._reference_photo_path
+        if not path or not pathlib.Path(path).exists():
+            self._photo_status_label.configure(text="No photo selected")
+            self._photo_thumb_label.configure(image="", text="")
+            self._reference_photo_thumb = None
+            return
+        self._photo_status_label.configure(text=pathlib.Path(path).name)
+        if not PIL_AVAILABLE:
+            self._photo_thumb_label.configure(image="", text="(install Pillow to preview)")
+            return
+        try:
+            img = Image.open(path)
+            img.thumbnail((180, 180), Image.LANCZOS)
+            thumb = ImageTk.PhotoImage(img)
+            self._photo_thumb_label.configure(image=thumb, text="")
+            self._reference_photo_thumb = thumb  # keep ref alive
+        except Exception as exc:
+            self._photo_thumb_label.configure(image="", text=f"(preview error: {exc})")
+
+    def _load_reference_photo_bytes(self) -> tuple[Optional[bytes], Optional[str]]:
+        path = self._reference_photo_path
+        if not path:
+            return None, None
+        p = pathlib.Path(path)
+        if not p.exists():
+            return None, None
+        ext = p.suffix.lower()
+        mime = REFERENCE_PHOTO_MIME_BY_EXT.get(ext)
+        if not mime:
+            return None, None
+        try:
+            return p.read_bytes(), mime
+        except OSError:
+            return None, None
+
     def _save_style_guide(self) -> None:
         guide = self._style_guide_text.get("1.0", tk.END).strip()
         self._config["style_guide"] = guide
@@ -1151,6 +1307,13 @@ class StoryGeneratorApp(tk.Tk):
         self._reading_level_var.set(self._profile.get("reading_level", ""))
         # Pre-fill story character from profile favorites
         self._story_char_var.set(self._profile.get("favorite_characters", ""))
+        gender = self._profile.get("gender", GENDERS[0])
+        if gender in GENDERS:
+            self._gender_var.set(gender)
+        photo_path = self._profile.get("reference_photo_path")
+        if photo_path and pathlib.Path(photo_path).exists():
+            self._reference_photo_path = photo_path
+            self._refresh_photo_widgets()
 
     def _save_profile_ui(self) -> None:
         self._profile = {
@@ -1158,6 +1321,8 @@ class StoryGeneratorApp(tk.Tk):
             "favorite_characters": self._fav_chars_var.get().strip(),
             "phonics_level": self._phonics_var.get(),
             "reading_level": self._reading_level_var.get().strip(),
+            "gender": self._gender_var.get(),
+            "reference_photo_path": self._reference_photo_path or "",
         }
         self._save_profile()
         self._set_status("Profile saved.")
@@ -1250,6 +1415,9 @@ class StoryGeneratorApp(tk.Tk):
         level = spec.get("phonics_level", "")
         if level in PHONICS_LEVELS:
             self._phonics_var.set(level)
+        gender = spec.get("gender", "")
+        if gender in GENDERS:
+            self._gender_var.set(gender)
 
     def _save_story_spec(self) -> None:
         title = self._title_var.get().strip() or "story"
@@ -1272,6 +1440,7 @@ class StoryGeneratorApp(tk.Tk):
             "target_sight_words": sight_list,
             "page_count": self._page_count_var.get(),
             "favorite_character": self._story_char_var.get().strip(),
+            "gender": self._gender_var.get(),
         }
         try:
             with open(path, "w", encoding="utf-8") as f:
@@ -1542,6 +1711,7 @@ class StoryGeneratorApp(tk.Tk):
         sight_raw = self._sight_words_var.get()
         sight_list = [w.strip() for w in sight_raw.split(",") if w.strip()]
         page_count = self._page_count_var.get()
+        gender = self._gender_var.get() or "child"
 
         self._set_generating(True)
         self._set_status("Generating story text…")
@@ -1557,6 +1727,7 @@ class StoryGeneratorApp(tk.Tk):
                     phonics_level=phonics_level,
                     sight_words=sight_list,
                     page_count=page_count,
+                    gender=gender,
                 )
                 self.after(0, lambda: self._on_text_generated(story))
             except Exception as exc:
@@ -1594,6 +1765,8 @@ class StoryGeneratorApp(tk.Tk):
         favorite_character = self._story_char_var.get().strip() or "a friendly animal"
         style_guide = self._get_style_guide()
         text_mode = self._get_text_mode()          # snapshot on main thread
+        gender = self._gender_var.get() or "child"
+        ref_bytes, ref_mime = self._load_reference_photo_bytes()
         pages = list(self._story_data.get("pages", []))  # snapshot before dispatch
         page_count = len(pages)
 
@@ -1617,6 +1790,9 @@ class StoryGeneratorApp(tk.Tk):
                         page_count=page_count,
                         style_guide=style_guide,
                         text_in_image=(text_mode == "in_image"),
+                        gender=gender,
+                        reference_photo_bytes=ref_bytes,
+                        reference_photo_mime=ref_mime,
                     )
                     if text_mode == "composite":
                         img_bytes = composite_text_onto_image(img_bytes, text)
@@ -1661,6 +1837,8 @@ class StoryGeneratorApp(tk.Tk):
         favorite_character = self._story_char_var.get().strip() or "a friendly animal"
         style_guide = self._get_style_guide()
         text_mode = self._get_text_mode()          # snapshot on main thread
+        gender = self._gender_var.get() or "child"
+        ref_bytes, ref_mime = self._load_reference_photo_bytes()
         page_count = len(self._story_data.get("pages", [])) if self._story_data else 1
 
         self._set_generating(True)
@@ -1677,6 +1855,9 @@ class StoryGeneratorApp(tk.Tk):
                     page_count=page_count,
                     style_guide=style_guide,
                     text_in_image=(text_mode == "in_image"),
+                    gender=gender,
+                    reference_photo_bytes=ref_bytes,
+                    reference_photo_mime=ref_mime,
                 )
                 if text_mode == "composite":
                     img_bytes = composite_text_onto_image(img_bytes, text)
